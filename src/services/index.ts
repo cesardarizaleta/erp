@@ -5,3 +5,4 @@ export * from './clienteService';
 export * from './inventarioService';
 export * from './ventaService';
 export * from './cobranzaService';
+export * from './configService';

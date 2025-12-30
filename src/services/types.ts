@@ -58,6 +58,34 @@ export interface Cobranza {
   user_id: string;
 }
 
+export interface ConfiguracionEmpresa {
+  id: string;
+  nombre_empresa: string;
+  rif_nit: string;
+  telefono: string;
+  email: string;
+  direccion: string;
+  logo_url?: string;
+  user_id: string;
+}
+
+export interface ConfiguracionNotificaciones {
+  id: string;
+  stock_bajo: boolean;
+  facturas_vencidas: boolean;
+  nuevas_ventas: boolean;
+  user_id: string;
+}
+
+export interface ConfiguracionSistema {
+  id: string;
+  version: string;
+  db_conectada: boolean;
+  ultima_actualizacion: string;
+  estado: string;
+  user_id: string;
+}
+
 // Tipos para respuestas de API
 export interface ApiResponse<T> {
   data: T | null;

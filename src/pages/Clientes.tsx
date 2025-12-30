@@ -14,6 +14,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -29,6 +30,12 @@ interface Client extends Cliente {
   totalCompras?: number;
   ultimaCompra?: string;
 }
+
+const tipoBadgeVariant = {
+  regular: "secondary",
+  mayorista: "default",
+  vip: "destructive",
+} as const;
 
 const Clientes = () => {
   const [clients, setClients] = useState<Client[]>([]);
@@ -153,6 +160,9 @@ const Clientes = () => {
                 <DialogTitle className="font-display">
                   {editingClient ? "Editar Cliente" : "Agregar Cliente"}
                 </DialogTitle>
+                <DialogDescription>
+                  {editingClient ? "Modifica los datos del cliente." : "Ingresa los datos del nuevo cliente."}
+                </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleAddClient} className="space-y-4">
                 <div className="space-y-2">
