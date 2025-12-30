@@ -12,6 +12,7 @@ import Ventas from "./pages/Ventas";
 import Cobranza from "./pages/Cobranza";
 import Clientes from "./pages/Clientes";
 import Configuracion from "./pages/Configuracion";
+import Logs from "./pages/Logs";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
@@ -87,6 +88,14 @@ const App = () => (
                 element={
                   <AuthGuard>
                     <Configuracion />
+                  </AuthGuard>
+                }
+              />
+              <Route
+                path="/logs"
+                element={
+                  <AuthGuard>
+                    <Logs />
                   </AuthGuard>
                 }
               />

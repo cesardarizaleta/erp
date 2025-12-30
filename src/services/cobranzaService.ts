@@ -49,8 +49,9 @@ class CobranzaService {
     try {
       // Obtener la tasa de cambio actual
       const dolarResponse = await dolarService.getDolarRates();
-      const tasaActual = dolarResponse.data ? 
-        dolarService.getOficialRate(dolarResponse.data) : 298.14;
+      const tasaActual = dolarResponse.data
+        ? dolarService.getOficialRate(dolarResponse.data)
+        : 298.14;
 
       // Calcular monto pendiente en bolívares
       const cobranzaDataConBS = {

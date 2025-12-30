@@ -12,6 +12,7 @@ import {
   LogOut,
   User,
   X,
+  Database,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
@@ -23,6 +24,7 @@ const menuItems = [
   { icon: ShoppingCart, label: "Ventas", path: "/ventas" },
   { icon: CreditCard, label: "Cobranza", path: "/cobranza" },
   { icon: Users, label: "Clientes", path: "/clientes" },
+  { icon: Database, label: "Logs", path: "/logs" },
   { icon: Settings, label: "Configuración", path: "/configuracion" },
 ];
 

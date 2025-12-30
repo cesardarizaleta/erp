@@ -1,34 +1,58 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Producto, ApiResponse, PaginatedResponse } from "./types";
 import { dolarService } from "./dolarService";
+import { loggingService, measureExecutionTime } from "./loggingService";
 
 class InventarioService {
   // Obtener todos los productos (con paginación)
   async getProductos(page: number = 1, limit: number = 10): Promise<PaginatedResponse<Producto>> {
-    try {
-      const from = (page - 1) * limit;
-      const to = from + limit - 1;
+    return measureExecutionTime(
+      async () => {
+        try {
+          const from = (page - 1) * limit;
+          const to = from + limit - 1;
 
-      const { data, error, count } = await supabase
-        .from("inventario")
-        .select("*", { count: "exact" })
-        .range(from, to)
-        .order("fecha_creacion", { ascending: false });
+          const { data, error, count } = await supabase
+            .from("inventario")
+            .select("*", { count: "exact" })
+            .range(from, to)
+            .order("fecha_creacion", { ascending: false });
 
-      if (error) {
-        console.error("Error fetching productos:", error);
-        return { data: [], count: 0, error: error.message };
-      }
+          if (error) {
+            await loggingService.logError(
+              "inventario",
+              "SELECT",
+              error.message,
+              "getProductos with pagination"
+            );
+            return { data: [], count: 0, error: error.message };
+          }
 
-      return {
-        data: data || [],
-        count: count || 0,
-        error: null,
-      };
-    } catch (err) {
-      console.error("Error in getProductos:", err);
-      return { data: [], count: 0, error: "Error al obtener productos" };
-    }
+          await loggingService.logSelect(
+            "inventario",
+            `getProductos page=${page} limit=${limit}`,
+            data?.map(p => p.id)
+          );
+
+          return {
+            data: data || [],
+            count: count || 0,
+            error: null,
+          };
+        } catch (err) {
+          const errorMessage = err instanceof Error ? err.message : "Error al obtener productos";
+          await loggingService.logError(
+            "inventario",
+            "SELECT",
+            errorMessage,
+            "getProductos catch block"
+          );
+          return { data: [], count: 0, error: errorMessage };
+        }
+      },
+      "inventario",
+      "SELECT"
+    );
   }
 
   // Obtener producto por ID
@@ -50,34 +74,52 @@ class InventarioService {
 
   // Crear producto
   async createProducto(productoData: Omit<Producto, "id">): Promise<ApiResponse<Producto>> {
-    try {
-      // Obtener la tasa de cambio actual
-      const dolarResponse = await dolarService.getDolarRates();
-      const tasaActual = dolarResponse.data ? 
-        dolarService.getOficialRate(dolarResponse.data) : 298.14; // fallback
+    return measureExecutionTime(
+      async () => {
+        try {
+          // Obtener la tasa de cambio actual
+          const dolarResponse = await dolarService.getDolarRates();
+          const tasaActual = dolarResponse.data
+            ? dolarService.getOficialRate(dolarResponse.data)
+            : 298.14; // fallback
 
-      // Calcular precio en bolívares
-      const productoDataConBS = {
-        ...productoData,
-        precio_bs: productoData.precio * tasaActual,
-      };
+          // Calcular precio en bolívares
+          const productoDataConBS = {
+            ...productoData,
+            precio_bs: productoData.precio * tasaActual,
+          };
 
-      const { data, error } = await supabase
-        .from("inventario")
-        .insert([productoDataConBS])
-        .select()
-        .single();
+          const { data, error } = await supabase
+            .from("inventario")
+            .insert([productoDataConBS])
+            .select()
+            .single();
 
-      if (error) {
-        console.error("Error creating producto:", error);
-        return { data: null, error: error.message };
-      }
+          if (error) {
+            await loggingService.logError(
+              "inventario",
+              "INSERT",
+              error.message,
+              "createProducto insert"
+            );
+            return { data: null, error: error.message };
+          }
 
-      return { data, error: null };
-    } catch (err) {
-      console.error("Error in createProducto:", err);
-      return { data: null, error: "Error al crear producto" };
-    }
+          return { data, error: null };
+        } catch (err) {
+          const errorMessage = err instanceof Error ? err.message : "Error al crear producto";
+          await loggingService.logError(
+            "inventario",
+            "INSERT",
+            errorMessage,
+            "createProducto catch block"
+          );
+          return { data: null, error: errorMessage };
+        }
+      },
+      "inventario",
+      "INSERT"
+    );
   }
 
   // Actualizar producto
@@ -88,8 +130,9 @@ class InventarioService {
       // Si se está actualizando el precio en USD, recalcular el precio en BS
       if (updates.precio !== undefined) {
         const dolarResponse = await dolarService.getDolarRates();
-        const tasaActual = dolarResponse.data ? 
-          dolarService.getOficialRate(dolarResponse.data) : 298.14;
+        const tasaActual = dolarResponse.data
+          ? dolarService.getOficialRate(dolarResponse.data)
+          : 298.14;
         updatesConBS.precio_bs = updates.precio * tasaActual;
       }
 

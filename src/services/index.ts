@@ -7,3 +7,4 @@ export * from "./ventaService";
 export * from "./cobranzaService";
 export * from "./configService";
 export * from "./dolarService";
+export * from "./loggingService";

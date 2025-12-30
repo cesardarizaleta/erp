@@ -166,7 +166,7 @@ const Ventas = () => {
           </div>
           <Dialog
             open={isDialogOpen}
-            onOpenChange={(open) => {
+            onOpenChange={open => {
               setIsDialogOpen(open);
               if (!open) {
                 resetForm();
@@ -191,7 +191,7 @@ const Ventas = () => {
                       <SelectValue placeholder="Seleccionar cliente..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {clientes.map((cliente) => (
+                      {clientes.map(cliente => (
                         <SelectItem key={cliente.id} value={cliente.id}>
                           {cliente.nombre}
                         </SelectItem>
@@ -204,7 +204,7 @@ const Ventas = () => {
                   <Input
                     id="total"
                     value={total}
-                    onChange={(e) => setTotal(e.target.value)}
+                    onChange={e => setTotal(e.target.value)}
                     type="number"
                     step="0.01"
                     placeholder="0.00"
@@ -212,10 +212,10 @@ const Ventas = () => {
                   />
                   {total && oficialRate && (
                     <p className="text-sm text-muted-foreground">
-                      Equivalente: {isInDollars 
+                      Equivalente:{" "}
+                      {isInDollars
                         ? `Bs. ${(Number(total) * oficialRate).toFixed(2)}`
-                        : `$${(Number(total) / oficialRate).toFixed(2)} USD`
-                      }
+                        : `$${(Number(total) / oficialRate).toFixed(2)} USD`}
                     </p>
                   )}
                 </div>
@@ -305,10 +305,10 @@ const Ventas = () => {
                     <TableRow key={sale.id} className="hover:bg-muted/50 transition-colors">
                       <TableCell className="font-mono text-sm">{sale.id}</TableCell>
                       <TableCell>{new Date(sale.fecha_venta).toLocaleDateString()}</TableCell>
-                      <TableCell className="font-medium">
-                        {sale.cliente || "N/A"}
+                      <TableCell className="font-medium">{sale.cliente || "N/A"}</TableCell>
+                      <TableCell className="font-semibold">
+                        {formatPriceDual(sale.total, sale.total_bs)}
                       </TableCell>
-                      <TableCell className="font-semibold">{formatPriceDual(sale.total, sale.total_bs)}</TableCell>
                       <TableCell>
                         <Badge variant={estadoBadgeVariant[sale.estado] || "secondary"}>
                           {sale.estado}
