@@ -40,7 +40,7 @@ export function QuickAccess() {
               onClick={openVentaModal}
               title="Nueva Venta"
             >
-              <span className="material-symbols-rounded" style={{ fontSize: "32px" }}>
+              <span className="material-symbols-rounded" style={{ fontSize: "28px" }}>
                 shopping_cart
               </span>
             </Button>
@@ -50,7 +50,7 @@ export function QuickAccess() {
               onClick={openClienteModal}
               title="Nuevo Cliente"
             >
-              <span className="material-symbols-rounded" style={{ fontSize: "32px" }}>
+              <span className="material-symbols-rounded" style={{ fontSize: "28px" }}>
                 person_add
               </span>
             </Button>
@@ -65,7 +65,7 @@ export function QuickAccess() {
         >
           <span
             className={`material-symbols-rounded transition-transform duration-300 ${isMenuOpen ? "rotate-45" : ""}`}
-            style={{ fontSize: "40px" }}
+            style={{ fontSize: "36px" }}
           >
             {isMenuOpen ? "close" : "add"}
           </span>
