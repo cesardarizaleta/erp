@@ -91,6 +91,7 @@ CREATE TABLE inventario (
     nombre_producto VARCHAR(255) NOT NULL,
     descripcion TEXT,
     precio DECIMAL(10, 2) NOT NULL,
+    precio_bs DECIMAL(10, 2),
     stock INTEGER NOT NULL DEFAULT 0,
     categoria VARCHAR(100),
     fecha_creacion TIMESTAMP DEFAULT NOW(),
@@ -103,6 +104,8 @@ CREATE TABLE ventas (
     cliente_id INTEGER REFERENCES clientes(id) ON DELETE SET NULL,
     fecha_venta TIMESTAMP DEFAULT NOW(),
     total DECIMAL(10, 2) NOT NULL,
+    total_bs DECIMAL(10, 2),
+    tasa_cambio_aplicada DECIMAL(10, 2),
     estado VARCHAR(50) DEFAULT 'completada',
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE
 );
@@ -114,7 +117,9 @@ CREATE TABLE venta_items (
     producto_id INTEGER REFERENCES inventario(id) ON DELETE SET NULL,
     cantidad INTEGER NOT NULL,
     precio_unitario DECIMAL(10, 2) NOT NULL,
-    subtotal DECIMAL(10, 2) NOT NULL
+    precio_unitario_bs DECIMAL(10, 2),
+    subtotal DECIMAL(10, 2) NOT NULL,
+    subtotal_bs DECIMAL(10, 2)
 );
 
 -- Tabla para cobranza

@@ -127,7 +127,8 @@ const Clientes = () => {
   const handleDelete = async (id: string) => {
     const confirmed = await confirm({
       title: "Eliminar Cliente",
-      description: "¿Estás seguro de que quieres eliminar este cliente? Esta acción no se puede deshacer.",
+      description:
+        "¿Estás seguro de que quieres eliminar este cliente? Esta acción no se puede deshacer.",
     });
     if (!confirmed) return;
 

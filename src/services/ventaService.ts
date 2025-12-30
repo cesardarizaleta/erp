@@ -169,6 +169,51 @@ class VentaService {
               await supabase.from("ventas").delete().eq("id", venta.id);
               return { data: null, error: itemsError.message };
             }
+
+            // Descontar stock del inventario
+            for (const item of itemsWithVentaId) {
+              if (item.producto_id) {
+                // Obtener stock actual
+                const { data: productoActual, error: fetchError } = await supabase
+                  .from("inventario")
+                  .select("stock")
+                  .eq("id", item.producto_id)
+                  .single();
+
+                if (fetchError || !productoActual) {
+                  // Si falla la obtención, revertir todo
+                  await supabase.from("venta_items").delete().eq("venta_id", venta.id);
+                  await supabase.from("ventas").delete().eq("id", venta.id);
+                  return {
+                    data: null,
+                    error: `Error al obtener stock del producto: ${fetchError?.message || "Producto no encontrado"}`,
+                  };
+                }
+
+                const nuevoStock = productoActual.stock - item.cantidad;
+                if (nuevoStock < 0) {
+                  // Si no hay suficiente stock, revertir todo
+                  await supabase.from("venta_items").delete().eq("venta_id", venta.id);
+                  await supabase.from("ventas").delete().eq("id", venta.id);
+                  return {
+                    data: null,
+                    error: `Stock insuficiente para el producto ${item.producto_id}`,
+                  };
+                }
+
+                const { error: stockError } = await supabase
+                  .from("inventario")
+                  .update({ stock: nuevoStock })
+                  .eq("id", item.producto_id);
+
+                if (stockError) {
+                  // Si falla el descuento, revertir todo
+                  await supabase.from("venta_items").delete().eq("venta_id", venta.id);
+                  await supabase.from("ventas").delete().eq("id", venta.id);
+                  return { data: null, error: `Error al actualizar stock: ${stockError.message}` };
+                }
+              }
+            }
           }
 
           const transformedVenta = {
@@ -228,7 +273,49 @@ class VentaService {
   // Eliminar venta
   async deleteVenta(id: string): Promise<ApiResponse<null>> {
     try {
-      // Primero eliminar los items de la venta
+      // Primero obtener los items para restaurar stock
+      const { data: items, error: fetchError } = await supabase
+        .from("venta_items")
+        .select("producto_id, cantidad")
+        .eq("venta_id", id);
+
+      if (fetchError) {
+        return { data: null, error: fetchError.message };
+      }
+
+      // Restaurar stock
+      if (items && items.length > 0) {
+        for (const item of items) {
+          if (item.producto_id) {
+            // Obtener stock actual
+            const { data: productoActual, error: fetchStockError } = await supabase
+              .from("inventario")
+              .select("stock")
+              .eq("id", item.producto_id)
+              .single();
+
+            if (fetchStockError || !productoActual) {
+              return {
+                data: null,
+                error: `Error al obtener stock del producto: ${fetchStockError?.message || "Producto no encontrado"}`,
+              };
+            }
+
+            const nuevoStock = productoActual.stock + item.cantidad;
+
+            const { error: stockError } = await supabase
+              .from("inventario")
+              .update({ stock: nuevoStock })
+              .eq("id", item.producto_id);
+
+            if (stockError) {
+              return { data: null, error: `Error al restaurar stock: ${stockError.message}` };
+            }
+          }
+        }
+      }
+
+      // Eliminar los items de la venta
       const { error: itemsError } = await supabase.from("venta_items").delete().eq("venta_id", id);
 
       if (itemsError) {

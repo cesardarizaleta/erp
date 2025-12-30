@@ -18,6 +18,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -29,9 +30,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, Eye, ShoppingCart, Loader2, CheckCircle } from "lucide-react";
-import { ventaService, clienteService, cobranzaService } from "@/services";
-import type { Venta, Cliente } from "@/services";
+import { Plus, Search, Eye, ShoppingCart, Loader2, CheckCircle, Trash2 } from "lucide-react";
+import { ventaService, clienteService, cobranzaService, inventarioService } from "@/services";
+import type { Venta, Cliente, Producto, VentaItem } from "@/services";
 import { supabase } from "@/integrations/supabase/client";
 import { useConfirm } from "@/hooks/useConfirm";
 
@@ -59,6 +60,15 @@ const Ventas = () => {
   const [selectedCliente, setSelectedCliente] = useState<string>("");
   const [total, setTotal] = useState<string>("");
   const [isInDollars, setIsInDollars] = useState<boolean>(true);
+  const [productos, setProductos] = useState<Producto[]>([]);
+  const [loadingProductos, setLoadingProductos] = useState(false);
+  const [ventaItems, setVentaItems] = useState<Omit<VentaItem, "id" | "venta_id">[]>([]);
+  const [selectedProducto, setSelectedProducto] = useState<string>("");
+  const [cantidad, setCantidad] = useState<string>("1");
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
+  const [saleItems, setSaleItems] = useState<VentaItem[]>([]);
+  const [loadingDetails, setLoadingDetails] = useState(false);
 
   const { formatPrice, formatPriceDual } = usePriceFormatter();
   const { convertToUSD, oficialRate } = useDolar();
@@ -67,7 +77,24 @@ const Ventas = () => {
   useEffect(() => {
     loadSales();
     loadClientes();
+    loadProductos();
   }, []);
+
+  const loadProductos = async () => {
+    try {
+      setLoadingProductos(true);
+      const response = await inventarioService.getProductos(1, 100);
+      if (response.error) {
+        console.error("Error loading products:", response.error);
+      } else {
+        setProductos(response.data || []);
+      }
+    } catch (err) {
+      console.error("Error loading products:", err);
+    } finally {
+      setLoadingProductos(false);
+    }
+  };
 
   const loadClientes = async () => {
     try {
@@ -117,35 +144,99 @@ const Ventas = () => {
     setSelectedCliente("");
     setTotal("");
     setIsInDollars(true);
+    setVentaItems([]);
+    setSelectedProducto("");
+    setCantidad("1");
+  };
+
+  const handleViewSaleDetails = async (sale: Sale) => {
+    setSelectedSale(sale);
+    setLoadingDetails(true);
+    setIsDetailsModalOpen(true);
+
+    try {
+      // Obtener los items de la venta
+      const response = await ventaService.getVentaById(sale.id);
+      if (response.data && response.data.items) {
+        setSaleItems(response.data.items);
+      } else {
+        setSaleItems([]);
+      }
+    } catch (err) {
+      console.error("Error loading sale details:", err);
+      setSaleItems([]);
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
+
+  const handleAddItem = () => {
+    if (!selectedProducto || !cantidad) return;
+
+    const producto = productos.find(p => p.id === parseInt(selectedProducto));
+    if (!producto) return;
+
+    const qty = parseInt(cantidad);
+    if (qty <= 0 || qty > producto.stock) return;
+
+    const precioUnitario = isInDollars ? producto.precio : producto.precio_bs;
+    const subtotal = precioUnitario * qty;
+    const precioUnitarioBS = producto.precio_bs;
+    const subtotalBS = precioUnitarioBS * qty;
+
+    const newItem: Omit<VentaItem, "id" | "venta_id"> = {
+      producto_id: producto.id,
+      cantidad: qty,
+      precio_unitario: precioUnitario,
+      precio_unitario_bs: precioUnitarioBS,
+      subtotal: subtotal,
+      subtotal_bs: subtotalBS,
+    };
+
+    setVentaItems([...ventaItems, newItem]);
+    setSelectedProducto("");
+    setCantidad("1");
+  };
+
+  const handleRemoveItem = (index: number) => {
+    setVentaItems(ventaItems.filter((_, i) => i !== index));
   };
 
   const handleAddSale = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (!selectedCliente || !total) {
-      setError("Por favor complete todos los campos");
+    if (ventaItems.length === 0) {
+      setError("Debes agregar al menos un producto a la venta");
       return;
     }
 
-    const numericTotal = Number(total);
-    let totalInUSD: number;
-
-    // Convertir a USD si está en bolívares
-    if (isInDollars) {
-      totalInUSD = numericTotal;
-    } else {
-      totalInUSD = convertToUSD(numericTotal);
-    }
-
-    const saleData = {
-      cliente_id: selectedCliente,
-      total: totalInUSD,
-      estado: "pendiente",
-    };
-
     try {
-      // For now, create a simple sale without items
-      const response = await ventaService.createVenta(saleData, []);
+      setLoading(true);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        setError("No se pudo identificar al usuario actual");
+        setLoading(false);
+        return;
+      }
+
+      // Calcular totales
+      const totalUSD = ventaItems.reduce((sum, item) => sum + item.subtotal, 0);
+      const totalBS = ventaItems.reduce((sum, item) => sum + item.subtotal_bs, 0);
+
+      const saleData = {
+        cliente_id: selectedCliente ? parseInt(selectedCliente) : undefined,
+        fecha_venta: new Date().toISOString(),
+        total: totalUSD,
+        total_bs: totalBS,
+        tasa_cambio_aplicada: oficialRate,
+        estado: "pendiente",
+        user_id: user.id,
+      };
+
+      const response = await ventaService.createVenta(saleData, ventaItems);
       if (response.error) {
         setError(response.error);
       } else {
@@ -155,6 +246,8 @@ const Ventas = () => {
       }
     } catch (err) {
       setError("Error al crear venta");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -235,57 +328,113 @@ const Ventas = () => {
                 Nueva Venta
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="font-display">Registrar Nueva Venta</DialogTitle>
               </DialogHeader>
-              <form onSubmit={handleAddSale} className="space-y-4">
+              <form onSubmit={handleAddSale} className="space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="cliente">Cliente</Label>
-                  <Select value={selectedCliente} onValueChange={setSelectedCliente} required>
+                  <Select value={selectedCliente} onValueChange={setSelectedCliente}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar cliente..." />
+                      <SelectValue placeholder="Seleccionar cliente (opcional)..." />
                     </SelectTrigger>
                     <SelectContent>
                       {clientes.map(cliente => (
-                        <SelectItem key={cliente.id} value={cliente.id}>
+                        <SelectItem key={cliente.id} value={cliente.id.toString()}>
                           {cliente.nombre}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="total">Total ({isInDollars ? "USD" : "BS"})</Label>
-                  <Input
-                    id="total"
-                    value={total}
-                    onChange={e => setTotal(e.target.value)}
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    required
-                  />
-                  {total && oficialRate && (
-                    <p className="text-sm text-muted-foreground">
-                      Equivalente:{" "}
-                      {isInDollars
-                        ? `Bs. ${(Number(total) * oficialRate).toFixed(2)}`
-                        : `$${(Number(total) / oficialRate).toFixed(2)} USD`}
-                    </p>
+
+                {/* Sección de productos */}
+                <div className="space-y-4">
+                  <Label className="text-base font-medium">Productos</Label>
+
+                  {/* Agregar producto */}
+                  <div className="flex gap-2">
+                    <Select value={selectedProducto} onValueChange={setSelectedProducto}>
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder="Seleccionar producto..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {productos
+                          .filter(p => p.stock > 0)
+                          .map(producto => (
+                            <SelectItem key={producto.id} value={producto.id.toString()}>
+                              {producto.nombre_producto} (Stock: {producto.stock})
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      value={cantidad}
+                      onChange={e => setCantidad(e.target.value)}
+                      type="number"
+                      min="1"
+                      placeholder="Cant."
+                      className="w-20"
+                    />
+                    <Button type="button" onClick={handleAddItem} variant="outline">
+                      Agregar
+                    </Button>
+                  </div>
+
+                  {/* Lista de productos agregados */}
+                  {ventaItems.length > 0 && (
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Productos en la venta:</Label>
+                      <div className="space-y-2 max-h-40 overflow-y-auto">
+                        {ventaItems.map((item, index) => {
+                          const producto = productos.find(p => p.id === item.producto_id);
+                          return (
+                            <div
+                              key={index}
+                              className="flex items-center justify-between p-2 bg-muted rounded"
+                            >
+                              <div className="flex-1">
+                                <p className="font-medium">{producto?.nombre_producto}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {item.cantidad} x{" "}
+                                  {formatPriceDual(item.precio_unitario, item.precio_unitario_bs)} ={" "}
+                                  {formatPriceDual(item.subtotal, item.subtotal_bs)}
+                                </p>
+                              </div>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleRemoveItem(index)}
+                                className="text-red-600 hover:text-red-700"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Total */}
+                  {ventaItems.length > 0 && (
+                    <div className="pt-4 border-t">
+                      <div className="flex justify-between items-center text-lg font-semibold">
+                        <span>Total:</span>
+                        <span>
+                          {formatPriceDual(
+                            ventaItems.reduce((sum, item) => sum + item.subtotal, 0),
+                            ventaItems.reduce((sum, item) => sum + item.subtotal_bs, 0)
+                          )}
+                        </span>
+                      </div>
+                    </div>
                   )}
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="currency-mode"
-                    checked={isInDollars}
-                    onCheckedChange={setIsInDollars}
-                  />
-                  <Label htmlFor="currency-mode" className="text-sm">
-                    Registrar en {isInDollars ? "dólares" : "bolívares"}
-                  </Label>
-                </div>
-                <Button type="submit" className="w-full">
+
+                <Button type="submit" className="w-full" disabled={ventaItems.length === 0}>
                   Registrar Venta
                 </Button>
               </form>
@@ -383,7 +532,12 @@ const Ventas = () => {
                               <CheckCircle className="w-4 h-4" />
                             </Button>
                           )}
-                          <Button variant="ghost" size="icon">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleViewSaleDetails(sale)}
+                            title="Ver detalles"
+                          >
                             <Eye className="w-4 h-4" />
                           </Button>
                         </div>
@@ -397,6 +551,96 @@ const Ventas = () => {
         )}
       </div>
       {ConfirmDialog}
+
+      {/* Modal de detalles de venta */}
+      <Dialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>
+        <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Detalles de Venta #{selectedSale?.id}</DialogTitle>
+            <DialogDescription>Información completa de la venta realizada</DialogDescription>
+          </DialogHeader>
+
+          {loadingDetails ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin" />
+              <span className="ml-2">Cargando detalles...</span>
+            </div>
+          ) : selectedSale ? (
+            <div className="space-y-6">
+              {/* Información general de la venta */}
+              <div className="grid grid-cols-2 gap-4 p-4 bg-muted rounded-lg">
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Fecha</Label>
+                  <p className="text-sm">
+                    {new Date(selectedSale.fecha_venta).toLocaleDateString()}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Cliente</Label>
+                  <p className="text-sm">{selectedSale.cliente || "N/A"}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Estado</Label>
+                  <p className="text-sm capitalize">{selectedSale.estado}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    Tasa de Cambio
+                  </Label>
+                  <p className="text-sm">
+                    {selectedSale.tasa_cambio_aplicada?.toFixed(2) || "N/A"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Productos vendidos */}
+              <div>
+                <Label className="text-base font-medium mb-3 block">Productos Vendidos</Label>
+                {saleItems.length > 0 ? (
+                  <div className="space-y-3">
+                    {saleItems.map((item, index) => {
+                      const producto = productos.find(p => p.id === item.producto_id);
+                      return (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-3 border rounded-lg"
+                        >
+                          <div className="flex-1">
+                            <p className="font-medium">
+                              {producto?.nombre_producto || `Producto ${item.producto_id}`}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              Cantidad: {item.cantidad} ×{" "}
+                              {formatPriceDual(item.precio_unitario, item.precio_unitario_bs)}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium">
+                              {formatPriceDual(item.subtotal, item.subtotal_bs)}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    {/* Total */}
+                    <div className="pt-4 border-t">
+                      <div className="flex justify-between items-center text-lg font-semibold">
+                        <span>Total de la venta:</span>
+                        <span>{formatPriceDual(selectedSale.total, selectedSale.total_bs)}</span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-center py-4">
+                    No se encontraron productos para esta venta
+                  </p>
+                )}
+              </div>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </MainLayout>
   );
 };

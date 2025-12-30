@@ -158,7 +158,8 @@ const Inventario = () => {
   const handleDelete = async (id: string) => {
     const confirmed = await confirm({
       title: "Eliminar Producto",
-      description: "¿Estás seguro de que quieres eliminar este producto? Esta acción no se puede deshacer.",
+      description:
+        "¿Estás seguro de que quieres eliminar este producto? Esta acción no se puede deshacer.",
     });
     if (!confirmed) return;
 
