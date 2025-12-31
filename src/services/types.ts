@@ -25,6 +25,7 @@ export interface Producto {
   precio: number; // Precio en USD
   precio_bs: number; // Precio en bolívares
   stock: number;
+  peso?: number | null; // Peso en kg, opcional
   categoria?: string | null;
   fecha_creacion: string;
   user_id: string;

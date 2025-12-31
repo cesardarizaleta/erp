@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -7,91 +8,129 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { ventaService, clienteService } from "@/services";
+import type { Venta, Cliente } from "@/services";
 
-const recentSales = [
-  {
-    id: "VTA-001",
-    cliente: "Distribuidora Norte",
-    producto: "Carbón Vegetal Premium",
-    cantidad: "500 kg",
-    total: "$1,250.00",
-    estado: "completado",
-  },
-  {
-    id: "VTA-002",
-    cliente: "Asadero El Paisa",
-    producto: "Carbón Mineral",
-    cantidad: "200 kg",
-    total: "$480.00",
-    estado: "pendiente",
-  },
-  {
-    id: "VTA-003",
-    cliente: "Restaurant La Casa",
-    producto: "Carbón Vegetal Premium",
-    cantidad: "150 kg",
-    total: "$375.00",
-    estado: "completado",
-  },
-  {
-    id: "VTA-004",
-    cliente: "Hotel Central",
-    producto: "Briquetas de Carbón",
-    cantidad: "300 kg",
-    total: "$720.00",
-    estado: "enviado",
-  },
-  {
-    id: "VTA-005",
-    cliente: "Carnicería Don Pedro",
-    producto: "Carbón Vegetal",
-    cantidad: "100 kg",
-    total: "$220.00",
-    estado: "completado",
-  },
-];
+interface RecentSale {
+  id: string;
+  cliente: string;
+  producto: string;
+  cantidad: string;
+  total: string;
+  estado: string;
+}
 
 const estadoBadgeVariant = {
   completado: "default",
   pendiente: "secondary",
+  procesando: "outline",
   enviado: "outline",
+  cancelado: "destructive",
 } as const;
 
 export function RecentSalesTable() {
-  return (
-    <div className="bg-card rounded-xl border border-border shadow-sm animate-slide-up overflow-x-auto">
-      <div className="p-6 border-b border-border">
-        <h3 className="text-lg font-display font-semibold text-foreground">Ventas Recientes</h3>
-        <p className="text-sm text-muted-foreground">Últimas 5 transacciones</p>
+  const [recentSales, setRecentSales] = useState<RecentSale[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadRecentSales();
+  }, []);
+
+  const loadRecentSales = async () => {
+    try {
+      setLoading(true);
+
+      // Get recent sales
+      const salesResponse = await ventaService.getVentas(1, 10);
+      const clientesResponse = await clienteService.getClientes(1, 100);
+
+      if (salesResponse.error || clientesResponse.error) {
+        console.error("Error loading recent sales");
+        return;
+      }
+
+      // Create client map
+      const clientesMap = new Map<string, string>();
+      clientesResponse.data?.forEach(cliente => {
+        clientesMap.set(cliente.id, cliente.nombre);
+      });
+
+      // Process sales data
+      const sales: RecentSale[] = salesResponse.data?.map(venta => ({
+        id: `VTA-${venta.id.slice(-3)}`,
+        cliente: venta.cliente_id ? clientesMap.get(venta.cliente_id) || "Cliente desconocido" : "Sin cliente",
+        producto: "Múltiples productos", // We don't have product details in venta summary
+        cantidad: "N/A", // We don't have quantity in venta summary
+        total: `$${venta.total.toLocaleString()}`,
+        estado: venta.estado,
+      })) || [];
+
+      setRecentSales(sales);
+    } catch (error) {
+      console.error("Error loading recent sales:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="bg-card rounded-xl border border-border shadow-sm p-6 animate-slide-up">
+        <div className="mb-6">
+          <h3 className="text-lg font-display font-semibold text-foreground">Ventas Recientes</h3>
+          <p className="text-sm text-muted-foreground">Últimas transacciones realizadas</p>
+        </div>
+        <div className="h-80 flex items-center justify-center">
+          <div className="text-muted-foreground">Cargando ventas recientes...</div>
+        </div>
       </div>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="min-w-[80px]">ID</TableHead>
-            <TableHead className="min-w-[120px]">Cliente</TableHead>
-            <TableHead className="min-w-[150px]">Producto</TableHead>
-            <TableHead className="min-w-[80px]">Cantidad</TableHead>
-            <TableHead className="min-w-[100px]">Total</TableHead>
-            <TableHead className="min-w-[100px]">Estado</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {recentSales.map(sale => (
-            <TableRow key={sale.id} className="hover:bg-muted/50 transition-colors">
-              <TableCell className="font-mono text-sm">{sale.id}</TableCell>
-              <TableCell className="font-medium">{sale.cliente}</TableCell>
-              <TableCell>{sale.producto}</TableCell>
-              <TableCell>{sale.cantidad}</TableCell>
-              <TableCell className="font-semibold">{sale.total}</TableCell>
-              <TableCell>
-                <Badge variant={estadoBadgeVariant[sale.estado as keyof typeof estadoBadgeVariant]}>
-                  {sale.estado}
-                </Badge>
-              </TableCell>
+    );
+  }
+
+  return (
+    <div className="bg-card rounded-xl border border-border shadow-sm p-6 animate-slide-up">
+      <div className="mb-6">
+        <h3 className="text-lg font-display font-semibold text-foreground">Ventas Recientes</h3>
+        <p className="text-sm text-muted-foreground">Últimas transacciones realizadas</p>
+      </div>
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>ID</TableHead>
+              <TableHead>Cliente</TableHead>
+              <TableHead>Producto</TableHead>
+              <TableHead>Cantidad</TableHead>
+              <TableHead>Total</TableHead>
+              <TableHead>Estado</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {recentSales.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                  No hay ventas recientes
+                </TableCell>
+              </TableRow>
+            ) : (
+              recentSales.map(sale => (
+                <TableRow key={sale.id}>
+                  <TableCell className="font-medium">{sale.id}</TableCell>
+                  <TableCell>{sale.cliente}</TableCell>
+                  <TableCell>{sale.producto}</TableCell>
+                  <TableCell>{sale.cantidad}</TableCell>
+                  <TableCell className="font-medium">{sale.total}</TableCell>
+                  <TableCell>
+                    <Badge variant={estadoBadgeVariant[sale.estado as keyof typeof estadoBadgeVariant] || "outline"}>
+                      {sale.estado}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }

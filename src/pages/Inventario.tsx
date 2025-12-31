@@ -126,6 +126,7 @@ const Inventario = () => {
       precio: Number(formData.get("precio")),
       stock: Number(formData.get("stock")),
       categoria: formData.get("categoria") as string,
+      peso: formData.get("peso") ? Number(formData.get("peso")) : null,
       fecha_creacion: new Date().toISOString(),
       user_id: session.user.id,
     };
@@ -248,6 +249,17 @@ const Inventario = () => {
                       required
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="peso">Peso (kg) - Opcional</Label>
+                    <Input
+                      id="peso"
+                      name="peso"
+                      type="number"
+                      step="0.01"
+                      defaultValue={editingProduct?.peso || ""}
+                      placeholder="Ej: 1.5"
+                    />
+                  </div>
                   <div className="col-span-2 space-y-2">
                     <Label htmlFor="descripcion">Descripción</Label>
                     <Input
@@ -320,6 +332,7 @@ const Inventario = () => {
                   <TableHead className="min-w-[200px]">Producto</TableHead>
                   <TableHead className="min-w-[120px]">Categoría</TableHead>
                   <TableHead className="min-w-[100px]">Stock</TableHead>
+                  <TableHead className="min-w-[100px]">Peso (kg)</TableHead>
                   <TableHead className="min-w-[100px]">Precio</TableHead>
                   <TableHead className="min-w-[120px] text-right">Acciones</TableHead>
                 </TableRow>
@@ -327,7 +340,7 @@ const Inventario = () => {
               <TableBody>
                 {filteredProducts.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
+                    <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
                       {loading ? (
                         <div className="flex items-center justify-center">
                           <Loader2 className="w-4 h-4 animate-spin mr-2" />
@@ -346,6 +359,7 @@ const Inventario = () => {
                       <TableCell className="font-medium">{product.nombre_producto}</TableCell>
                       <TableCell>{product.categoria || "Sin categoría"}</TableCell>
                       <TableCell>{product.stock.toLocaleString()}</TableCell>
+                      <TableCell>{product.peso ? `${product.peso} kg` : "N/A"}</TableCell>
                       <TableCell>{formatPrice(product.precio, "USD")}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">

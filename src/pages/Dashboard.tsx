@@ -26,21 +26,30 @@ const Dashboard = () => {
       setLoading(true);
       setError(null);
 
-      // Load sales data
-      const salesResponse = await ventaService.getVentas(1, 100);
-      const ventasMes = salesResponse.data?.reduce((acc, venta) => acc + venta.total, 0) || 0;
+      // Get current month sales
+      const salesResponse = await ventaService.getVentas(1, 1000);
+      const currentMonth = new Date().getMonth();
+      const currentYear = new Date().getFullYear();
+
+      const ventasMes = salesResponse.data
+        ?.filter(venta => {
+          const ventaDate = new Date(venta.fecha_venta);
+          return ventaDate.getMonth() === currentMonth && ventaDate.getFullYear() === currentYear;
+        })
+        .reduce((acc, venta) => acc + venta.total, 0) || 0;
 
       // Load inventory data
-      const inventoryResponse = await inventarioService.getProductos(1, 100);
-      const inventarioTotal =
-        inventoryResponse.data?.reduce((acc, item) => acc + item.stock, 0) || 0;
+      const inventoryResponse = await inventarioService.getProductos(1, 1000);
+      const inventarioTotal = inventoryResponse.data?.reduce((acc, item) => acc + (item.stock * (item.peso || 0)), 0) || 0;
+
+      // Calculate inventory capacity (assuming 150% of current stock as capacity)
+      const inventarioCapacidad = Math.max(inventarioTotal * 1.5, 50000); // Minimum 50,000kg capacity
+      const inventarioPercentage = (inventarioTotal / inventarioCapacidad) * 100;
 
       // Load pending collections
-      const cobranzaResponse = await cobranzaService.getCobranzas(1, 100);
-      const cuentasPorCobrar =
-        cobranzaResponse.data?.reduce((acc, cob) => acc + cob.monto_pendiente, 0) || 0;
-      const pedidosPendientes =
-        cobranzaResponse.data?.filter(cob => cob.estado !== "pagado").length || 0;
+      const cobranzaResponse = await cobranzaService.getCobranzas(1, 1000);
+      const cuentasPorCobrar = cobranzaResponse.data?.reduce((acc, cob) => acc + cob.monto_pendiente, 0) || 0;
+      const pedidosPendientes = cobranzaResponse.data?.filter(cob => cob.estado !== "pagado").length || 0;
 
       setStats({
         ventasMes,
@@ -98,7 +107,7 @@ const Dashboard = () => {
               <StatCard
                 title="Inventario Total"
                 value={`${stats.inventarioTotal.toLocaleString()} kg`}
-                change="82% capacidad"
+                change={`${Math.round((stats.inventarioTotal / Math.max(stats.inventarioTotal * 1.5, 50000)) * 100)}% capacidad`}
                 changeType="neutral"
                 icon={Package}
                 iconColor="success"
