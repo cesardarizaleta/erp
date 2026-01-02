@@ -8,10 +8,10 @@ import { useInventarioStore } from "@/stores/inventarioStore";
  * Se monta una vez al inicio de la aplicación
  */
 export function StoreInitializer() {
-  const initializeAuth = useAuthStore((state) => state.initialize);
-  const startAutoRefresh = useDolarStore((state) => state.startAutoRefresh);
-  const subscribeInventario = useInventarioStore((state) => state.subscribe);
-  const unsubscribeInventario = useInventarioStore((state) => state.unsubscribe);
+  const initializeAuth = useAuthStore(state => state.initialize);
+  const startAutoRefresh = useDolarStore(state => state.startAutoRefresh);
+  const subscribeInventario = useInventarioStore(state => state.subscribe);
+  const unsubscribeInventario = useInventarioStore(state => state.unsubscribe);
 
   useEffect(() => {
     // Inicializar autenticación
@@ -22,8 +22,8 @@ export function StoreInitializer() {
 
     // Suscribirse a cambios de autenticación para activar/desactivar inventario
     const unsubscribeAuth = useAuthStore.subscribe(
-      (state) => state.user,
-      (user) => {
+      state => state.user,
+      user => {
         if (user) {
           // Usuario autenticado, suscribirse a inventario
           subscribeInventario();
@@ -55,4 +55,3 @@ export function StoreInitializer() {
 
   return null; // Este componente no renderiza nada
 }
-

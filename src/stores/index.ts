@@ -2,4 +2,3 @@
 export { useAuthStore } from "./authStore";
 export { useDolarStore } from "./dolarStore";
 export { useInventarioStore } from "./inventarioStore";
-

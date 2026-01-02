@@ -37,14 +37,14 @@ export const useInventarioStore = create<InventarioState>((set, get) => {
           schema: "public",
           table: "inventario",
         },
-        (payload) => {
+        payload => {
           const { productos } = get();
 
           if (payload.eventType === "INSERT") {
             // Nuevo producto agregado
             const newProduct = payload.new as Producto;
             // Verificar que no exista ya (evitar duplicados)
-            if (!productos.find((p) => p.id === newProduct.id)) {
+            if (!productos.find(p => p.id === newProduct.id)) {
               set({
                 productos: [...productos, newProduct],
                 lastUpdate: new Date(),
@@ -54,16 +54,14 @@ export const useInventarioStore = create<InventarioState>((set, get) => {
             // Producto actualizado
             const updatedProduct = payload.new as Producto;
             set({
-              productos: productos.map((p) =>
-                p.id === updatedProduct.id ? updatedProduct : p
-              ),
+              productos: productos.map(p => (p.id === updatedProduct.id ? updatedProduct : p)),
               lastUpdate: new Date(),
             });
           } else if (payload.eventType === "DELETE") {
             // Producto eliminado
             const deletedId = (payload.old as { id: string }).id;
             set({
-              productos: productos.filter((p) => p.id !== deletedId),
+              productos: productos.filter(p => p.id !== deletedId),
               lastUpdate: new Date(),
             });
           }
@@ -92,30 +90,27 @@ export const useInventarioStore = create<InventarioState>((set, get) => {
     loading: false,
     error: null,
     lastUpdate: null,
-    setProductos: (productos) => set({ productos, lastUpdate: new Date() }),
-    addProducto: (producto) =>
-      set((state) => ({
+    setProductos: productos => set({ productos, lastUpdate: new Date() }),
+    addProducto: producto =>
+      set(state => ({
         productos: [...state.productos, producto],
         lastUpdate: new Date(),
       })),
     updateProducto: (id, updates) =>
-      set((state) => ({
-        productos: state.productos.map((p) =>
-          p.id === id ? { ...p, ...updates } : p
-        ),
+      set(state => ({
+        productos: state.productos.map(p => (p.id === id ? { ...p, ...updates } : p)),
         lastUpdate: new Date(),
       })),
-    removeProducto: (id) =>
-      set((state) => ({
-        productos: state.productos.filter((p) => p.id !== id),
+    removeProducto: id =>
+      set(state => ({
+        productos: state.productos.filter(p => p.id !== id),
         lastUpdate: new Date(),
       })),
-    getProductoById: (id) => {
+    getProductoById: id => {
       const { productos } = get();
-      return productos.find((p) => p.id === id);
+      return productos.find(p => p.id === id);
     },
     subscribe,
     unsubscribe,
   };
 });
-

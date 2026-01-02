@@ -11,3 +11,6 @@ export { loggingService, measureExecutionTime } from "../features/logs/services/
 export * from "./userService";
 
 export { gastosService } from "@/features/gastos/services/gastosService";
+
+// Exportar wrapper genérico
+export { SupabaseWrapper } from "./supabaseWrapper";

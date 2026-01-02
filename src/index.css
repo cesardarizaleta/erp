@@ -2,19 +2,25 @@
 
 /* Fallback fonts in case Google Fonts fail to load */
 @font-face {
-  font-family: 'Inter';
+  font-family: "Inter";
   font-style: normal;
   font-weight: 400;
-  src: local('Inter Regular'), local('Inter-Regular'),
-       url('https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiJ-Ek-_EeA.woff2') format('woff2');
+  src:
+    local("Inter Regular"),
+    local("Inter-Regular"),
+    url("https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiJ-Ek-_EeA.woff2")
+      format("woff2");
 }
 
 @font-face {
-  font-family: 'Space Grotesk';
+  font-family: "Space Grotesk";
   font-style: normal;
   font-weight: 400;
-  src: local('Space Grotesk Regular'), local('SpaceGrotesk-Regular'),
-       url('https://fonts.gstatic.com/s/spacegrotesk/v13/V8mQoQDjQSkFtoMM3T6r8E7mF71Q.woff2') format('woff2');
+  src:
+    local("Space Grotesk Regular"),
+    local("SpaceGrotesk-Regular"),
+    url("https://fonts.gstatic.com/s/spacegrotesk/v13/V8mQoQDjQSkFtoMM3T6r8E7mF71Q.woff2")
+      format("woff2");
 }
 
 @tailwind base;

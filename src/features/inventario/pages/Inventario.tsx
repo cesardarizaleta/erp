@@ -45,13 +45,13 @@ const Inventario = () => {
 
   const { formatPrice } = usePriceFormatter();
   const { confirm, ConfirmDialog } = useConfirm();
-  
+
   // Store de inventario para sincronización en tiempo real
-  const storeProductos = useInventarioStore((state) => state.productos);
-  const setStoreProductos = useInventarioStore((state) => state.setProductos);
-  const addProductoToStore = useInventarioStore((state) => state.addProducto);
-  const updateProductoInStore = useInventarioStore((state) => state.updateProducto);
-  const removeProductoFromStore = useInventarioStore((state) => state.removeProducto);
+  const storeProductos = useInventarioStore(state => state.productos);
+  const setStoreProductos = useInventarioStore(state => state.setProductos);
+  const addProductoToStore = useInventarioStore(state => state.addProducto);
+  const updateProductoInStore = useInventarioStore(state => state.updateProducto);
+  const removeProductoFromStore = useInventarioStore(state => state.removeProducto);
 
   useEffect(() => {
     checkAuthAndLoadProducts();
@@ -67,12 +67,12 @@ const Inventario = () => {
         const storeProduct = storeProductos.find(sp => sp.id === localProduct.id);
         return storeProduct || localProduct;
       });
-      
+
       // Solo actualizar si hay cambios
-      const hasChanges = updatedProducts.some((up, index) => 
-        JSON.stringify(up) !== JSON.stringify(products[index])
+      const hasChanges = updatedProducts.some(
+        (up, index) => JSON.stringify(up) !== JSON.stringify(products[index])
       );
-      
+
       if (hasChanges) {
         setProducts(updatedProducts);
       }
@@ -126,7 +126,7 @@ const Inventario = () => {
         const loadedProducts = response.data || [];
         setProducts(loadedProducts);
         setTotalPages(Math.ceil(response.count / pageSize));
-        
+
         // Sincronizar con el store
         setStoreProductos(loadedProducts);
       }
@@ -173,9 +173,7 @@ const Inventario = () => {
           setError(response.error);
         } else {
           const updatedProduct = { ...editingProduct, ...productData };
-          setProducts(
-            products.map(p => (p.id === editingProduct.id ? updatedProduct : p))
-          );
+          setProducts(products.map(p => (p.id === editingProduct.id ? updatedProduct : p)));
           // Actualizar en el store (la suscripción en tiempo real también lo hará, pero esto es más inmediato)
           updateProductoInStore(editingProduct.id, productData);
         }

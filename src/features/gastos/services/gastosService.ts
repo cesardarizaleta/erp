@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { SupabaseWrapper } from "@/services/supabaseWrapper";
 import type {
   Gastos,
   ApiResponse,
@@ -15,6 +16,8 @@ import type {
 } from "../types/gastos";
 
 class GastosService {
+  private readonly tableName = "gastos";
+
   // Helper para obtener URL pública de un comprobante
   private getComprobanteUrl(pathOrUrl: string): string {
     // Si ya es una URL completa de Supabase Storage, devolverla tal cual
@@ -27,86 +30,89 @@ class GastosService {
 
     return data.publicUrl;
   }
+
   // Obtener todos los gastos (con paginación y filtros)
   async getGastos(
     page: number = 1,
     limit: number = 10,
     filters?: GastosFiltersType
   ): Promise<PaginatedResponse<GastosType>> {
-    try {
-      const from = (page - 1) * limit;
-      const to = from + limit - 1;
+    let queryBuilder = SupabaseWrapper.from(this.tableName);
 
-      let query = supabase
-        .from("gastos")
-        .select("*", { count: "exact" })
-        .range(from, to)
-        .order("fecha_creacion", { ascending: false });
-
-      // Aplicar filtros
-      if (filters) {
-        if (filters.fecha_desde) {
-          query = query.gte("fecha_gasto", filters.fecha_desde);
-        }
-        if (filters.fecha_hasta) {
-          query = query.lte("fecha_gasto", filters.fecha_hasta);
-        }
-        if (filters.categoria) {
-          query = query.eq("categoria", filters.categoria);
-        }
-        if (filters.estado) {
-          query = query.eq("estado", filters.estado);
-        }
-        if (filters.beneficiario) {
-          query = query.ilike("beneficiario", `%${filters.beneficiario}%`);
-        }
+    // Aplicar filtros
+    if (filters) {
+      if (filters.fecha_desde) {
+        queryBuilder = queryBuilder.gte("fecha_gasto", filters.fecha_desde);
       }
-
-      const { data, error, count } = await query;
-
-      if (error) {
-        console.error("Error fetching gastos:", error);
-        return { data: [], count: 0, error: error.message };
+      if (filters.fecha_hasta) {
+        queryBuilder = queryBuilder.lte("fecha_gasto", filters.fecha_hasta);
       }
-
-      // Procesar los datos para asegurar que las comprobante_url sean URLs completas
-      const processedData = (data || []).map(item => ({
-        ...item,
-        comprobante_url: item.comprobante_url ? this.getComprobanteUrl(item.comprobante_url) : null,
-      }));
-
-      return {
-        data: processedData,
-        count: count || 0,
-        error: null,
-      };
-    } catch (err) {
-      console.error("Error in getGastos:", err);
-      return { data: [], count: 0, error: "Error al obtener gastos" };
+      if (filters.categoria) {
+        queryBuilder = queryBuilder.eq("categoria", filters.categoria);
+      }
+      if (filters.estado) {
+        queryBuilder = queryBuilder.eq("estado", filters.estado);
+      }
+      if (filters.beneficiario) {
+        queryBuilder = queryBuilder.ilike("beneficiario", `%${filters.beneficiario}%`);
+      }
     }
+
+    const response = await SupabaseWrapper.selectPaginated<GastosType>(queryBuilder, {
+      tableName: this.tableName,
+      operation: "SELECT",
+      pagination: {
+        page,
+        limit,
+        orderBy: "fecha_creacion",
+        orderDirection: "desc",
+      },
+      logQuery: true,
+      queryDescription: `getGastos page=${page} limit=${limit}`,
+    });
+
+    if (response.error) {
+      return response;
+    }
+
+    // Procesar los datos para asegurar que las comprobante_url sean URLs completas
+    const processedData = (response.data || []).map(item => ({
+      ...item,
+      comprobante_url: item.comprobante_url ? this.getComprobanteUrl(item.comprobante_url) : null,
+    }));
+
+    return {
+      data: processedData,
+      count: response.count,
+      error: null,
+    };
   }
 
   // Obtener gasto por ID
   async getGastoById(id: string): Promise<ApiResponse<GastosType>> {
-    try {
-      const { data, error } = await supabase.from("gastos").select("*").eq("id", id).single();
-
-      if (error) {
-        console.error("Error fetching gasto:", error);
-        return { data: null, error: error.message };
+    const response = await SupabaseWrapper.select<GastosType>(
+      SupabaseWrapper.from(this.tableName).select("*").eq("id", id).single(),
+      {
+        tableName: this.tableName,
+        operation: "SELECT",
+        logQuery: true,
+        queryDescription: `getGastoById id=${id}`,
       }
+    );
 
-      // Procesar el dato para asegurar que la comprobante_url sea una URL completa
-      const processedData = {
-        ...data,
-        comprobante_url: data.comprobante_url ? this.getComprobanteUrl(data.comprobante_url) : null,
-      };
-
-      return { data: processedData, error: null };
-    } catch (err) {
-      console.error("Error in getGastoById:", err);
-      return { data: null, error: "Error al obtener gasto" };
+    if (response.error || !response.data) {
+      return response;
     }
+
+    // Procesar el dato para asegurar que la comprobante_url sea una URL completa
+    const processedData = {
+      ...response.data,
+      comprobante_url: response.data.comprobante_url
+        ? this.getComprobanteUrl(response.data.comprobante_url)
+        : null,
+    };
+
+    return { data: processedData, error: null };
   }
 
   // Crear gasto
@@ -321,19 +327,12 @@ class GastosService {
 
   // Eliminar gasto
   async deleteGasto(id: string): Promise<ApiResponse<null>> {
-    try {
-      const { error } = await supabase.from("gastos").delete().eq("id", id);
-
-      if (error) {
-        console.error("Error deleting gasto:", error);
-        return { data: null, error: error.message };
-      }
-
-      return { data: null, error: null };
-    } catch (err) {
-      console.error("Error in deleteGasto:", err);
-      return { data: null, error: "Error al eliminar gasto" };
-    }
+    return SupabaseWrapper.delete(SupabaseWrapper.from(this.tableName).delete().eq("id", id), {
+      tableName: this.tableName,
+      operation: "DELETE",
+      logQuery: true,
+      queryDescription: `deleteGasto id=${id}`,
+    });
   }
 
   // Aprobar gasto (cambiar estado a aprobado)

@@ -59,4 +59,3 @@ export const useDolarStore = create<DolarState>((set, get) => {
     startAutoRefresh,
   };
 });
-

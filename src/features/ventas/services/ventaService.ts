@@ -1,68 +1,52 @@
 import { supabase } from "@/integrations/supabase/client";
+import { SupabaseWrapper } from "@/services/supabaseWrapper";
 import type { Venta, VentaItem, ApiResponse, PaginatedResponse } from "@/services/types";
 import { dolarService } from "@/services/dolarService";
 import { loggingService, measureExecutionTime } from "../../logs/services/loggingService";
 
 class VentaService {
+  private readonly tableName = "ventas";
+
   // Obtener todas las ventas (con paginación)
   async getVentas(page: number = 1, limit: number = 10): Promise<PaginatedResponse<Venta>> {
-    return measureExecutionTime(
-      async () => {
-        try {
-          const from = (page - 1) * limit;
-          const to = from + limit - 1;
-
-          const { data, error, count } = await supabase
-            .from("ventas")
-            .select(
-              `
-            *,
-            clientes:cliente_id (
-              nombre
-            )
-          `,
-              { count: "exact" }
-            )
-            .range(from, to)
-            .order("fecha_venta", { ascending: false });
-
-          if (error) {
-            await loggingService.logError(
-              "ventas",
-              "SELECT",
-              error.message,
-              "getVentas with pagination"
-            );
-            return { data: [], count: 0, error: error.message };
-          }
-
-          // Transformar los datos para incluir el nombre del cliente
-          const transformedData = (data || []).map(venta => ({
-            ...venta,
-            cliente: venta.clientes?.nombre || "Cliente desconocido",
-          }));
-
-          // Log successful query with record count
-          await loggingService.logSelect(
-            "ventas",
-            `getVentas page=${page} limit=${limit}`,
-            transformedData.map(v => v.id)
-          );
-
-          return {
-            data: transformedData,
-            count: count || 0,
-            error: null,
-          };
-        } catch {
-          const errorMessage = err instanceof Error ? err.message : "Error al obtener ventas";
-          await loggingService.logError("ventas", "SELECT", errorMessage, "getVentas catch block");
-          return { data: [], count: 0, error: errorMessage };
-        }
-      },
-      "ventas",
-      "SELECT"
+    const response = await SupabaseWrapper.selectPaginated<Venta & { clientes?: { nombre: string } }>(
+      SupabaseWrapper.from(this.tableName).select(
+        `
+        *,
+        clientes:cliente_id (
+          nombre
+        )
+      `
+      ),
+      {
+        tableName: this.tableName,
+        operation: "SELECT",
+        pagination: {
+          page,
+          limit,
+          orderBy: "fecha_venta",
+          orderDirection: "desc",
+        },
+        logQuery: true,
+        queryDescription: `getVentas page=${page} limit=${limit}`,
+      }
     );
+
+    if (response.error) {
+      return response;
+    }
+
+    // Transformar los datos para incluir el nombre del cliente
+    const transformedData = (response.data || []).map(venta => ({
+      ...venta,
+      cliente: venta.clientes?.nombre || "Cliente desconocido",
+    })) as Venta[];
+
+    return {
+      data: transformedData,
+      count: response.count,
+      error: null,
+    };
   }
 
   // Obtener venta por ID con items
@@ -240,9 +224,8 @@ class VentaService {
 
   // Actualizar venta
   async updateVenta(id: string, updates: Partial<Venta>): Promise<ApiResponse<Venta>> {
-    try {
-      const { data, error } = await supabase
-        .from("ventas")
+    const response = await SupabaseWrapper.update<Venta & { clientes?: { nombre: string } }>(
+      SupabaseWrapper.from(this.tableName)
         .update(updates)
         .eq("id", id)
         .select(
@@ -253,21 +236,25 @@ class VentaService {
           )
         `
         )
-        .single();
-
-      if (error) {
-        return { data: null, error: error.message };
+        .single(),
+      {
+        tableName: this.tableName,
+        operation: "UPDATE",
+        logQuery: true,
+        queryDescription: `updateVenta id=${id}`,
       }
+    );
 
-      const transformedVenta = {
-        ...data,
-        cliente: data.clientes?.nombre || "Cliente desconocido",
-      };
-
-      return { data: transformedVenta, error: null };
-    } catch {
-      return { data: null, error: "Error al actualizar venta" };
+    if (response.error || !response.data) {
+      return response as ApiResponse<Venta>;
     }
+
+    const transformedVenta = {
+      ...response.data,
+      cliente: response.data.clientes?.nombre || "Cliente desconocido",
+    } as Venta;
+
+    return { data: transformedVenta, error: null };
   }
 
   // Eliminar venta

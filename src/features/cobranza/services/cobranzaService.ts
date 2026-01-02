@@ -1,113 +1,83 @@
-import { supabase } from "@/integrations/supabase/client";
+import { SupabaseWrapper } from "@/services/supabaseWrapper";
 import type { Cobranza, ApiResponse, PaginatedResponse } from "@/services/types";
 import { dolarService } from "@/services/dolarService";
 
 class CobranzaService {
+  private readonly tableName = "cobranza";
+
   // Obtener todas las cobranzas (con paginación)
   async getCobranzas(page: number = 1, limit: number = 10): Promise<PaginatedResponse<Cobranza>> {
-    try {
-      const from = (page - 1) * limit;
-      const to = from + limit - 1;
-
-      const { data, error, count } = await supabase
-        .from("cobranza")
-        .select("*", { count: "exact" })
-        .range(from, to)
-        .order("id", { ascending: false });
-
-      if (error) {
-        return { data: [], count: 0, error: error.message };
-      }
-
-      return {
-        data: data || [],
-        count: count || 0,
-        error: null,
-      };
-    } catch {
-      return { data: [], count: 0, error: "Error al obtener cobranzas" };
-    }
+    return SupabaseWrapper.selectPaginated<Cobranza>(SupabaseWrapper.from(this.tableName), {
+      tableName: this.tableName,
+      operation: "SELECT",
+      pagination: {
+        page,
+        limit,
+        orderBy: "id",
+        orderDirection: "desc",
+      },
+      logQuery: true,
+      queryDescription: `getCobranzas page=${page} limit=${limit}`,
+    });
   }
 
   // Obtener cobranza por ID
   async getCobranzaById(id: string): Promise<ApiResponse<Cobranza>> {
-    try {
-      const { data, error } = await supabase.from("cobranza").select("*").eq("id", id).single();
-
-      if (error) {
-        return { data: null, error: error.message };
+    return SupabaseWrapper.select<Cobranza>(
+      SupabaseWrapper.from(this.tableName).select("*").eq("id", id).single(),
+      {
+        tableName: this.tableName,
+        operation: "SELECT",
+        logQuery: true,
+        queryDescription: `getCobranzaById id=${id}`,
       }
-
-      return { data, error: null };
-    } catch {
-      return { data: null, error: "Error al obtener cobranza" };
-    }
+    );
   }
 
   // Crear cobranza
   async createCobranza(cobranzaData: Omit<Cobranza, "id">): Promise<ApiResponse<Cobranza>> {
-    try {
-      // Obtener la tasa de cambio actual
-      const dolarResponse = await dolarService.getDolarRates();
-      const tasaActual = dolarResponse.data
-        ? dolarService.getOficialRate(dolarResponse.data)
-        : 298.14;
+    // Obtener la tasa de cambio actual
+    const dolarResponse = await dolarService.getDolarRates();
+    const tasaActual = dolarResponse.data ? dolarService.getOficialRate(dolarResponse.data) : 298.14;
 
-      // Calcular monto pendiente en bolívares
-      const cobranzaDataConBS = {
-        ...cobranzaData,
-        monto_pendiente_bs: cobranzaData.monto_pendiente * tasaActual,
-      };
+    // Calcular monto pendiente en bolívares
+    const cobranzaDataConBS = {
+      ...cobranzaData,
+      monto_pendiente_bs: cobranzaData.monto_pendiente * tasaActual,
+    };
 
-      const { data, error } = await supabase
-        .from("cobranza")
-        .insert([cobranzaDataConBS])
-        .select()
-        .single();
-
-      if (error) {
-        return { data: null, error: error.message };
+    return SupabaseWrapper.insert<Cobranza>(
+      SupabaseWrapper.from(this.tableName).insert([cobranzaDataConBS]).select().single(),
+      {
+        tableName: this.tableName,
+        operation: "INSERT",
+        logQuery: true,
+        queryDescription: "createCobranza",
       }
-
-      return { data, error: null };
-    } catch {
-      return { data: null, error: "Error al crear cobranza" };
-    }
+    );
   }
 
   // Actualizar cobranza
   async updateCobranza(id: string, updates: Partial<Cobranza>): Promise<ApiResponse<Cobranza>> {
-    try {
-      const { data, error } = await supabase
-        .from("cobranza")
-        .update(updates)
-        .eq("id", id)
-        .select()
-        .single();
-
-      if (error) {
-        return { data: null, error: error.message };
+    return SupabaseWrapper.update<Cobranza>(
+      SupabaseWrapper.from(this.tableName).update(updates).eq("id", id).select().single(),
+      {
+        tableName: this.tableName,
+        operation: "UPDATE",
+        logQuery: true,
+        queryDescription: `updateCobranza id=${id}`,
       }
-
-      return { data, error: null };
-    } catch {
-      return { data: null, error: "Error al actualizar cobranza" };
-    }
+    );
   }
 
   // Eliminar cobranza
   async deleteCobranza(id: string): Promise<ApiResponse<null>> {
-    try {
-      const { error } = await supabase.from("cobranza").delete().eq("id", id);
-
-      if (error) {
-        return { data: null, error: error.message };
-      }
-
-      return { data: null, error: null };
-    } catch {
-      return { data: null, error: "Error al eliminar cobranza" };
-    }
+    return SupabaseWrapper.delete(SupabaseWrapper.from(this.tableName).delete().eq("id", id), {
+      tableName: this.tableName,
+      operation: "DELETE",
+      logQuery: true,
+      queryDescription: `deleteCobranza id=${id}`,
+    });
   }
 
   // Buscar cobranzas
@@ -116,68 +86,54 @@ class CobranzaService {
     page: number = 1,
     limit: number = 10
   ): Promise<PaginatedResponse<Cobranza>> {
-    try {
-      const from = (page - 1) * limit;
-      const to = from + limit - 1;
-
-      const { data, error, count } = await supabase
-        .from("cobranza")
-        .select("*", { count: "exact" })
-        .or(`notas.ilike.%${query}%,estado.ilike.%${query}%`)
-        .range(from, to)
-        .order("id", { ascending: false });
-
-      if (error) {
-        return { data: [], count: 0, error: error.message };
+    return SupabaseWrapper.selectPaginated<Cobranza>(
+      SupabaseWrapper.from(this.tableName).or(`notas.ilike.%${query}%,estado.ilike.%${query}%`),
+      {
+        tableName: this.tableName,
+        operation: "SELECT",
+        pagination: {
+          page,
+          limit,
+          orderBy: "id",
+          orderDirection: "desc",
+        },
+        logQuery: true,
+        queryDescription: `searchCobranzas query=${query}`,
       }
-
-      return {
-        data: data || [],
-        count: count || 0,
-        error: null,
-      };
-    } catch {
-      return { data: [], count: 0, error: "Error al buscar cobranzas" };
-    }
+    );
   }
 
   // Obtener cobranzas pendientes
   async getCobranzasPendientes(): Promise<ApiResponse<Cobranza[]>> {
-    try {
-      const { data, error } = await supabase
-        .from("cobranza")
+    return SupabaseWrapper.select<Cobranza[]>(
+      SupabaseWrapper.from(this.tableName)
         .select("*")
         .eq("estado", "pendiente")
-        .order("fecha_vencimiento", { ascending: true });
-
-      if (error) {
-        return { data: null, error: error.message };
+        .order("fecha_vencimiento", { ascending: true }),
+      {
+        tableName: this.tableName,
+        operation: "SELECT",
+        logQuery: true,
+        queryDescription: "getCobranzasPendientes",
       }
-
-      return { data, error: null };
-    } catch {
-      return { data: null, error: "Error al obtener cobranzas pendientes" };
-    }
+    );
   }
 
   // Marcar como pagada
   async marcarComoPagada(id: string): Promise<ApiResponse<Cobranza>> {
-    try {
-      const { data, error } = await supabase
-        .from("cobranza")
+    return SupabaseWrapper.update<Cobranza>(
+      SupabaseWrapper.from(this.tableName)
         .update({ estado: "pagada" })
         .eq("id", id)
         .select()
-        .single();
-
-      if (error) {
-        return { data: null, error: error.message };
+        .single(),
+      {
+        tableName: this.tableName,
+        operation: "UPDATE",
+        logQuery: true,
+        queryDescription: `marcarComoPagada id=${id}`,
       }
-
-      return { data, error: null };
-    } catch {
-      return { data: null, error: "Error al marcar cobranza como pagada" };
-    }
+    );
   }
 }
 
