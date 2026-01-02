@@ -15,8 +15,13 @@ export function usePriceFormatter() {
   };
 
   const formatPriceDual = (amountUSD: number, amountBS: number): string => {
-    if (typeof amountUSD !== 'number' || isNaN(amountUSD) || typeof amountBS !== 'number' || isNaN(amountBS)) {
-      return 'Precio no disponible';
+    if (
+      typeof amountUSD !== "number" ||
+      isNaN(amountUSD) ||
+      typeof amountBS !== "number" ||
+      isNaN(amountBS)
+    ) {
+      return "Precio no disponible";
     }
     if (showInUSD) {
       return `$${amountUSD.toFixed(2)} USD / Bs. ${amountBS.toFixed(2)}`;

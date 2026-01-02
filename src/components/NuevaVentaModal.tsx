@@ -107,8 +107,8 @@ export function NuevaVentaModal({ open, onOpenChange }: NuevaVentaModalProps) {
         cliente_id: selectedCliente ? parseInt(selectedCliente) : null,
         total: totalUSD,
         fecha_venta: new Date().toISOString(),
-        estado: 'completada',
-        user_id: user?.id || '',
+        estado: "completada",
+        user_id: user?.id || "",
       };
 
       const items = ventaItems.map(item => ({

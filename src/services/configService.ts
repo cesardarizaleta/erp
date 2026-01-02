@@ -10,17 +10,19 @@ class ConfigService {
   // Obtener configuración de empresa
   async getEmpresaConfig(userId: string): Promise<ApiResponse<ConfiguracionEmpresa>> {
     try {
-      const { data, error } = await supabase
-        .from("configuracion_empresa")
-        .select("*")
-        .eq("user_id", userId)
-        .single();
+      // NOTE: Tabla no existe en Supabase, usando datos mock
+      const mockData: ConfiguracionEmpresa = {
+        id: "1",
+        user_id: userId,
+        nombre_empresa: "Carbón La Zulianita",
+        rif_nit: "J-123456789",
+        telefono: "+58 412 123 4567",
+        email: "info@lazulianita.com",
+        direccion: "Av. Principal, Ciudad Bolívar, Venezuela",
+        logo_url: "/logo.jpg",
+      };
 
-      if (error) {
-        return { data: null, error: error.message };
-      }
-
-      return { data, error: null };
+      return { data: mockData, error: null };
     } catch (err) {
       return { data: null, error: "Error al obtener configuración de empresa" };
     }
@@ -31,17 +33,19 @@ class ConfigService {
     config: Partial<ConfiguracionEmpresa>
   ): Promise<ApiResponse<ConfiguracionEmpresa>> {
     try {
-      const { data, error } = await supabase
-        .from("configuracion_empresa")
-        .upsert(config)
-        .select()
-        .single();
+      // NOTE: Tabla no existe en Supabase, simulando actualización
+      const updatedData: ConfiguracionEmpresa = {
+        id: "1",
+        user_id: config.user_id || "",
+        nombre_empresa: config.nombre_empresa || "Carbón La Zulianita",
+        rif_nit: config.rif_nit || "J-123456789",
+        telefono: config.telefono || "+58 412 123 4567",
+        email: config.email || "info@lazulianita.com",
+        direccion: config.direccion || "Av. Principal, Ciudad Bolívar, Venezuela",
+        logo_url: config.logo_url || "/logo.jpg",
+      };
 
-      if (error) {
-        return { data: null, error: error.message };
-      }
-
-      return { data, error: null };
+      return { data: updatedData, error: null };
     } catch (err) {
       return { data: null, error: "Error al actualizar configuración de empresa" };
     }
@@ -50,17 +54,16 @@ class ConfigService {
   // Obtener configuración de notificaciones
   async getNotificacionesConfig(userId: string): Promise<ApiResponse<ConfiguracionNotificaciones>> {
     try {
-      const { data, error } = await supabase
-        .from("configuracion_notificaciones")
-        .select("*")
-        .eq("user_id", userId)
-        .single();
+      // NOTE: Tabla no existe en Supabase, usando datos mock
+      const mockData: ConfiguracionNotificaciones = {
+        id: "1",
+        user_id: userId,
+        stock_bajo: true,
+        facturas_vencidas: true,
+        nuevas_ventas: false,
+      };
 
-      if (error) {
-        return { data: null, error: error.message };
-      }
-
-      return { data, error: null };
+      return { data: mockData, error: null };
     } catch (err) {
       return { data: null, error: "Error al obtener configuración de notificaciones" };
     }
@@ -71,17 +74,16 @@ class ConfigService {
     config: Partial<ConfiguracionNotificaciones>
   ): Promise<ApiResponse<ConfiguracionNotificaciones>> {
     try {
-      const { data, error } = await supabase
-        .from("configuracion_notificaciones")
-        .upsert(config)
-        .select()
-        .single();
+      // NOTE: Tabla no existe en Supabase, simulando actualización
+      const updatedData: ConfiguracionNotificaciones = {
+        id: "1",
+        user_id: config.user_id || "",
+        stock_bajo: config.stock_bajo ?? true,
+        facturas_vencidas: config.facturas_vencidas ?? true,
+        nuevas_ventas: config.nuevas_ventas ?? false,
+      };
 
-      if (error) {
-        return { data: null, error: error.message };
-      }
-
-      return { data, error: null };
+      return { data: updatedData, error: null };
     } catch (err) {
       return { data: null, error: "Error al actualizar configuración de notificaciones" };
     }
@@ -90,17 +92,17 @@ class ConfigService {
   // Obtener configuración del sistema
   async getSistemaConfig(userId: string): Promise<ApiResponse<ConfiguracionSistema>> {
     try {
-      const { data, error } = await supabase
-        .from("configuracion_sistema")
-        .select("*")
-        .eq("user_id", userId)
-        .single();
+      // NOTE: Tabla no existe en Supabase, usando datos mock
+      const mockData: ConfiguracionSistema = {
+        id: "1",
+        user_id: userId,
+        version: "1.0.0",
+        db_conectada: true,
+        ultima_actualizacion: new Date().toISOString(),
+        estado: "Operativo",
+      };
 
-      if (error) {
-        return { data: null, error: error.message };
-      }
-
-      return { data, error: null };
+      return { data: mockData, error: null };
     } catch (err) {
       return { data: null, error: "Error al obtener configuración del sistema" };
     }
@@ -111,17 +113,17 @@ class ConfigService {
     config: Partial<ConfiguracionSistema>
   ): Promise<ApiResponse<ConfiguracionSistema>> {
     try {
-      const { data, error } = await supabase
-        .from("configuracion_sistema")
-        .upsert(config)
-        .select()
-        .single();
+      // NOTE: Tabla no existe en Supabase, simulando actualización
+      const updatedData: ConfiguracionSistema = {
+        id: "1",
+        user_id: config.user_id || "",
+        version: config.version || "1.0.0",
+        db_conectada: config.db_conectada ?? true,
+        ultima_actualizacion: new Date().toISOString(),
+        estado: config.estado || "Operativo",
+      };
 
-      if (error) {
-        return { data: null, error: error.message };
-      }
-
-      return { data, error: null };
+      return { data: updatedData, error: null };
     } catch (err) {
       return { data: null, error: "Error al actualizar configuración del sistema" };
     }

@@ -1,25 +1,16 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { Bell, Database } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Bell, Shield, Palette, Users, Database } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { configService } from "@/services";
-import type {
-  ConfiguracionEmpresa,
-  ConfiguracionNotificaciones,
-  ConfiguracionSistema,
-} from "@/services";
-import logoZulianita from "@/assets/logo-zulianita.jpg";
+import type { ConfiguracionNotificaciones, ConfiguracionSistema } from "@/services";
 
 const Configuracion = () => {
   const { user } = useAuth();
-  const [empresaConfig, setEmpresaConfig] = useState<ConfiguracionEmpresa | null>(null);
   const [notificacionesConfig, setNotificacionesConfig] =
     useState<ConfiguracionNotificaciones | null>(null);
   const [sistemaConfig, setSistemaConfig] = useState<ConfiguracionSistema | null>(null);
@@ -36,27 +27,17 @@ const Configuracion = () => {
 
     setLoading(true);
     try {
-      const [empresaRes, notifRes, sistemaRes] = await Promise.all([
-        configService.getEmpresaConfig(user.id),
+      const [notifRes, sistemaRes] = await Promise.all([
         configService.getNotificacionesConfig(user.id),
         configService.getSistemaConfig(user.id),
       ]);
 
-      if (empresaRes.data) setEmpresaConfig(empresaRes.data);
       if (notifRes.data) setNotificacionesConfig(notifRes.data);
       if (sistemaRes.data) setSistemaConfig(sistemaRes.data);
     } catch (error) {
       console.error("Error loading configurations:", error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleSaveEmpresa = async () => {
-    if (!empresaConfig || !user?.id) return;
-    const result = await configService.updateEmpresaConfig(empresaConfig);
-    if (result.error) {
-      console.error("Error saving empresa config:", result.error);
     }
   };
 
@@ -80,6 +61,7 @@ const Configuracion = () => {
       </MainLayout>
     );
   }
+
   return (
     <MainLayout>
       <div className="space-y-6 max-w-4xl">
@@ -88,129 +70,6 @@ const Configuracion = () => {
           <h1 className="text-3xl font-display font-bold text-foreground">Configuración</h1>
           <p className="text-muted-foreground">Ajustes del sistema y preferencias</p>
         </div>
-
-        {/* Company Info */}
-        <Card className="animate-slide-up">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Building2 className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle className="font-display">Información de la Empresa</CardTitle>
-                <CardDescription>Datos generales del negocio</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-6">
-              <img
-                src={empresaConfig?.logo_url || logoZulianita}
-                alt="Logo"
-                className="w-24 h-24 rounded-xl object-cover border-2 border-primary"
-              />
-              <div className="flex-1 space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Nombre de la Empresa</Label>
-                    <Input
-                      value={empresaConfig?.nombre_empresa || ""}
-                      onChange={e =>
-                        setEmpresaConfig(prev =>
-                          prev ? { ...prev, nombre_empresa: e.target.value } : null
-                        )
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>RIF / NIT</Label>
-                    <Input
-                      value={empresaConfig?.rif_nit || ""}
-                      onChange={e =>
-                        setEmpresaConfig(prev =>
-                          prev ? { ...prev, rif_nit: e.target.value } : null
-                        )
-                      }
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Teléfono</Label>
-                    <Input
-                      value={empresaConfig?.telefono || ""}
-                      onChange={e =>
-                        setEmpresaConfig(prev =>
-                          prev ? { ...prev, telefono: e.target.value } : null
-                        )
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Email</Label>
-                    <Input
-                      value={empresaConfig?.email || ""}
-                      onChange={e =>
-                        setEmpresaConfig(prev => (prev ? { ...prev, email: e.target.value } : null))
-                      }
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Dirección</Label>
-              <Input
-                value={empresaConfig?.direccion || ""}
-                onChange={e =>
-                  setEmpresaConfig(prev => (prev ? { ...prev, direccion: e.target.value } : null))
-                }
-              />
-            </div>
-            <Button className="mt-4" onClick={handleSaveEmpresa}>
-              Guardar Cambios
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Users Section */}
-        <Card className="animate-slide-up">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Users className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <CardTitle className="font-display">Gestión de Usuarios</CardTitle>
-                <CardDescription>Administrar accesos y permisos</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                <div>
-                  <p className="font-medium">admin@lazulianita.com</p>
-                  <p className="text-sm text-muted-foreground">Administrador</p>
-                </div>
-                <Badge className="bg-primary text-primary-foreground">Admin</Badge>
-              </div>
-              <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                <div>
-                  <p className="font-medium">ventas@lazulianita.com</p>
-                  <p className="text-sm text-muted-foreground">Vendedor</p>
-                </div>
-                <Badge variant="outline">Vendedor</Badge>
-              </div>
-              <Button variant="outline" className="w-full">
-                + Agregar Usuario
-              </Button>
-              <p className="text-xs text-muted-foreground text-center">
-                Para gestionar usuarios completa, conecta Lovable Cloud
-              </p>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Notifications */}
         <Card className="animate-slide-up">
