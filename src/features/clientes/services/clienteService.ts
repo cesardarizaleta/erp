@@ -1,72 +1,73 @@
-import { SupabaseWrapper } from "@/services/supabaseWrapper";
+import { clienteRepository } from "@/repositories";
 import type { Cliente, ApiResponse, PaginatedResponse } from "@/services/types";
 
+/**
+ * Servicio de aplicación para clientes
+ * Usa el repositorio para acceder a datos, manteniendo lógica de aplicación
+ */
 class ClienteService {
-  private readonly tableName = "clientes";
-
   // Obtener todos los clientes (con paginación)
   async getClientes(page: number = 1, limit: number = 10): Promise<PaginatedResponse<Cliente>> {
-    return SupabaseWrapper.selectPaginated<Cliente>(SupabaseWrapper.from(this.tableName), {
-      tableName: this.tableName,
-      operation: "SELECT",
-      pagination: {
-        page,
-        limit,
-        orderBy: "fecha_creacion",
-        orderDirection: "desc",
-      },
-      logQuery: true,
-      queryDescription: `getClientes page=${page} limit=${limit}`,
+    const result = await clienteRepository.getAll({
+      page,
+      limit,
+      orderBy: "fecha_creacion",
+      orderDirection: "desc",
     });
+
+    return {
+      data: result.data,
+      count: result.count,
+      error: result.error,
+    };
   }
 
   // Obtener cliente por ID
   async getClienteById(id: string): Promise<ApiResponse<Cliente>> {
-    return SupabaseWrapper.select<Cliente>(
-      SupabaseWrapper.from(this.tableName).select("*").eq("id", id).single(),
-      {
-        tableName: this.tableName,
-        operation: "SELECT",
-        logQuery: true,
-        queryDescription: `getClienteById id=${id}`,
-      }
-    );
+    const result = await clienteRepository.getById(id);
+
+    return {
+      data: result.data,
+      error: result.error,
+    };
   }
 
   // Crear cliente
-  async createCliente(clienteData: Omit<Cliente, "id">): Promise<ApiResponse<Cliente>> {
-    return SupabaseWrapper.insert<Cliente>(
-      SupabaseWrapper.from(this.tableName).insert([clienteData]).select().single(),
-      {
-        tableName: this.tableName,
-        operation: "INSERT",
-        logQuery: true,
-        queryDescription: "createCliente",
-      }
-    );
+  async createCliente(
+    clienteData: Omit<Cliente, "id" | "fecha_creacion">
+  ): Promise<ApiResponse<Cliente>> {
+    // Lógica de aplicación: agregar campos por defecto
+    const clienteConDefaults = {
+      ...clienteData,
+      user_id: clienteData.user_id, // Debería venir del contexto de autenticación
+    };
+
+    const result = await clienteRepository.create(clienteConDefaults);
+
+    return {
+      data: result.data,
+      error: result.error,
+    };
   }
 
   // Actualizar cliente
   async updateCliente(id: string, updates: Partial<Cliente>): Promise<ApiResponse<Cliente>> {
-    return SupabaseWrapper.update<Cliente>(
-      SupabaseWrapper.from(this.tableName).update(updates).eq("id", id).select().single(),
-      {
-        tableName: this.tableName,
-        operation: "UPDATE",
-        logQuery: true,
-        queryDescription: `updateCliente id=${id}`,
-      }
-    );
+    const result = await clienteRepository.update(id, updates);
+
+    return {
+      data: result.data,
+      error: result.error,
+    };
   }
 
   // Eliminar cliente
   async deleteCliente(id: string): Promise<ApiResponse<null>> {
-    return SupabaseWrapper.delete(SupabaseWrapper.from(this.tableName).delete().eq("id", id), {
-      tableName: this.tableName,
-      operation: "DELETE",
-      logQuery: true,
-      queryDescription: `deleteCliente id=${id}`,
-    });
+    const result = await clienteRepository.delete(id);
+
+    return {
+      data: result.data,
+      error: result.error,
+    };
   }
 
   // Buscar clientes
@@ -75,23 +76,17 @@ class ClienteService {
     page: number = 1,
     limit: number = 10
   ): Promise<PaginatedResponse<Cliente>> {
-    return SupabaseWrapper.selectPaginated<Cliente>(
-      SupabaseWrapper.from(this.tableName).or(
-        `nombre.ilike.%${query}%,email.ilike.%${query}%,telefono.ilike.%${query}%`
-      ),
-      {
-        tableName: this.tableName,
-        operation: "SELECT",
-        pagination: {
-          page,
-          limit,
-          orderBy: "fecha_creacion",
-          orderDirection: "desc",
-        },
-        logQuery: true,
-        queryDescription: `searchClientes query=${query}`,
-      }
-    );
+    const result = await clienteRepository.search({
+      query,
+      page,
+      limit,
+    });
+
+    return {
+      data: result.data,
+      count: result.count,
+      error: result.error,
+    };
   }
 }
 

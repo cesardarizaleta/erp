@@ -9,7 +9,9 @@ class VentaService {
 
   // Obtener todas las ventas (con paginación)
   async getVentas(page: number = 1, limit: number = 10): Promise<PaginatedResponse<Venta>> {
-    const response = await SupabaseWrapper.selectPaginated<Venta & { clientes?: { nombre: string } }>(
+    const response = await SupabaseWrapper.selectPaginated<
+      Venta & { clientes?: { nombre: string } }
+    >(
       SupabaseWrapper.from(this.tableName).select(
         `
         *,

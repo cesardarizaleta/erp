@@ -20,58 +20,16 @@ import NotFound from "./features/error/pages/NotFound";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Cache inteligente basado en el tipo de dato
-      staleTime: query => {
-        // Datos que cambian muy frecuentemente (ventas recientes, stock)
-        if (query.queryKey[0] === "ventas" && query.queryKey.includes("recent")) {
-          return 30 * 1000; // 30 segundos
-        }
-        // Datos que cambian frecuentemente (ventas, productos, cobranzas)
-        if (["ventas", "productos", "cobranzas"].includes(query.queryKey[0] as string)) {
-          return 2 * 60 * 1000; // 2 minutos
-        }
-        // Datos que cambian poco (clientes, configuraciones)
-        if (["clientes", "config"].includes(query.queryKey[0] as string)) {
-          return 10 * 60 * 1000; // 10 minutos
-        }
-        // Datos históricos/gráficos (cambian muy poco)
-        if (query.queryKey.includes("chart") || query.queryKey.includes("statistics")) {
-          return 30 * 60 * 1000; // 30 minutos
-        }
-        // Default
-        return 5 * 60 * 1000; // 5 minutos
-      },
-      // Mantener en cache
-      gcTime: 60 * 60 * 1000, // 1 hora
-      // Reintentar 2 veces en caso de error
+      // Configuración simplificada
+      staleTime: 5 * 60 * 1000, // 5 minutos por defecto
+      gcTime: 30 * 60 * 1000, // 30 minutos en cache
       retry: 2,
-      // Reintentar con delay exponencial
       retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
-      // Refetch inteligente
-      refetchOnWindowFocus: query => {
-        // Solo refetch datos críticos cuando vuelve el foco
-        return ["ventas", "productos"].includes(query.queryKey[0] as string);
-      },
-      refetchOnReconnect: query => {
-        // Refetch datos importantes al reconectar
-        return ["ventas", "productos", "clientes"].includes(query.queryKey[0] as string);
-      },
-      // Refetch en intervalos para datos críticos
-      refetchInterval: query => {
-        // Actualizar ventas recientes cada 2 minutos
-        if (query.queryKey[0] === "ventas" && query.queryKey.includes("recent")) {
-          return 2 * 60 * 1000;
-        }
-        return false;
-      },
+      refetchOnWindowFocus: false, // Deshabilitado por defecto para mejor rendimiento
+      refetchOnReconnect: true,
     },
     mutations: {
-      // Reintentar mutaciones 1 vez
       retry: 1,
-      // Invalidar queries relacionadas después de mutaciones
-      onSuccess: () => {
-        // Esto se maneja en hooks específicos
-      },
     },
   },
 });

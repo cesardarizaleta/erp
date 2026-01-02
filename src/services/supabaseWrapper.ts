@@ -4,13 +4,17 @@ import { loggingService, measureExecutionTime } from "@/features/logs/services/l
 import type { PostgrestFilterBuilder, PostgrestQueryBuilder } from "@supabase/supabase-js";
 
 /**
+ * Niveles de logging para reducir overhead
+ */
+export type LogLevel = "none" | "error" | "critical" | "all";
+
+/**
  * Opciones para operaciones de base de datos
  */
 export interface DbOperationOptions {
   tableName: string;
   operation: "SELECT" | "INSERT" | "UPDATE" | "DELETE";
-  logQuery?: boolean;
-  logError?: boolean;
+  logLevel?: LogLevel; // Reemplaza logQuery y logError
   measureTime?: boolean;
   queryDescription?: string;
 }
@@ -31,7 +35,7 @@ export interface PaginationOptions {
  */
 export class SupabaseWrapper {
   /**
-   * Ejecuta una operación SELECT con manejo de errores y logging
+   * Ejecuta una operación SELECT con manejo de errores y logging optimizado
    */
   static async select<T>(
     queryBuilder: PostgrestFilterBuilder<any, any, any>,
@@ -42,7 +46,12 @@ export class SupabaseWrapper {
         const { data, error } = await queryBuilder;
 
         if (error) {
-          if (options.logError !== false) {
+          // Solo loguear errores críticos o si está configurado
+          if (
+            options.logLevel === "error" ||
+            options.logLevel === "critical" ||
+            options.logLevel === "all"
+          ) {
             await loggingService.logError(
               options.tableName,
               options.operation,
@@ -53,7 +62,8 @@ export class SupabaseWrapper {
           return { data: null, error: error.message };
         }
 
-        if (options.logQuery && data) {
+        // Solo loguear SELECT críticos (como búsquedas específicas, no listados generales)
+        if (options.logLevel === "critical" || options.logLevel === "all") {
           await loggingService.logSelect(
             options.tableName,
             options.queryDescription || "SELECT query",
@@ -64,7 +74,7 @@ export class SupabaseWrapper {
         return { data: data as T, error: null };
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : `Error en ${options.operation}`;
-        if (options.logError !== false) {
+        if (options.logLevel !== "none") {
           await loggingService.logError(
             options.tableName,
             options.operation,
