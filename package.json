@@ -14,8 +14,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "code-quality": "npm run lint && npm run type-check && npm run format:check",
-    "code-quality:fix": "npm run lint:fix && npm run format",
-    "prepare": "husky"
+    "code-quality:fix": "npm run lint:fix && npm run format"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
@@ -96,7 +95,6 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^15.15.0",
-    "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
     "lovable-tagger": "^1.1.13",
     "postcss": "^8.5.6",
