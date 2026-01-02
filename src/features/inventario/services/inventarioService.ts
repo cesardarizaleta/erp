@@ -16,7 +16,8 @@ class InventarioService {
         orderBy: "fecha_creacion",
         orderDirection: "desc",
       },
-      logQuery: true,
+      logLevel: "none",
+      countStrategy: "planned",
       queryDescription: `getProductos page=${page} limit=${limit}`,
     });
   }
@@ -28,7 +29,7 @@ class InventarioService {
       {
         tableName: this.tableName,
         operation: "SELECT",
-        logQuery: true,
+        logLevel: "none",
         queryDescription: `getProductoById id=${id}`,
       }
     );
@@ -52,7 +53,7 @@ class InventarioService {
       {
         tableName: this.tableName,
         operation: "INSERT",
-        logQuery: true,
+        logLevel: "critical",
         queryDescription: "createProducto",
       }
     );
@@ -75,7 +76,7 @@ class InventarioService {
       {
         tableName: this.tableName,
         operation: "UPDATE",
-        logQuery: true,
+        logLevel: "critical",
         queryDescription: `updateProducto id=${id}`,
       }
     );
@@ -86,7 +87,7 @@ class InventarioService {
     return SupabaseWrapper.delete(SupabaseWrapper.from(this.tableName).delete().eq("id", id), {
       tableName: this.tableName,
       operation: "DELETE",
-      logQuery: true,
+      logLevel: "critical",
       queryDescription: `deleteProducto id=${id}`,
     });
   }
@@ -110,7 +111,8 @@ class InventarioService {
           orderBy: "fecha_creacion",
           orderDirection: "desc",
         },
-        logQuery: true,
+        logLevel: "none",
+        countStrategy: "planned",
         queryDescription: `searchProductos query=${query}`,
       }
     );
@@ -123,7 +125,7 @@ class InventarioService {
       {
         tableName: this.tableName,
         operation: "SELECT",
-        logQuery: true,
+        logLevel: "error",
         queryDescription: "getProductosStockBajo (stock <= 5)",
       }
     );
@@ -140,7 +142,7 @@ class InventarioService {
       {
         tableName: this.tableName,
         operation: "UPDATE",
-        logQuery: true,
+        logLevel: "critical",
         queryDescription: `updateStock id=${id} nuevoStock=${nuevoStock}`,
       }
     );

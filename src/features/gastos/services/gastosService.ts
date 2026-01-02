@@ -67,7 +67,8 @@ class GastosService {
         orderBy: "fecha_creacion",
         orderDirection: "desc",
       },
-      logQuery: true,
+      logLevel: "none",
+      countStrategy: "planned",
       queryDescription: `getGastos page=${page} limit=${limit}`,
     });
 
@@ -95,7 +96,7 @@ class GastosService {
       {
         tableName: this.tableName,
         operation: "SELECT",
-        logQuery: true,
+        logLevel: "none",
         queryDescription: `getGastoById id=${id}`,
       }
     );
@@ -330,7 +331,7 @@ class GastosService {
     return SupabaseWrapper.delete(SupabaseWrapper.from(this.tableName).delete().eq("id", id), {
       tableName: this.tableName,
       operation: "DELETE",
-      logQuery: true,
+      logLevel: "critical",
       queryDescription: `deleteGasto id=${id}`,
     });
   }
@@ -356,25 +357,34 @@ class GastosService {
     fechaHasta?: string
   ): Promise<ApiResponse<GastosStatsType>> {
     try {
-      let query = supabase.from("gastos").select("monto, categoria, estado");
-
+      let baseFilters = supabase.from("gastos");
       if (fechaDesde) {
-        query = query.gte("fecha_gasto", fechaDesde);
+        baseFilters = baseFilters.gte("fecha_gasto", fechaDesde);
       }
       if (fechaHasta) {
-        query = query.lte("fecha_gasto", fechaHasta);
+        baseFilters = baseFilters.lte("fecha_gasto", fechaHasta);
       }
 
-      const { data, error } = await query;
+      // Total acumulado
+      const totalPromise = baseFilters.select("sum:monto").single();
 
-      if (error) {
-        console.error("Error fetching estadísticas:", error);
-        return { data: null, error: error.message };
+      // Totales por categoría y estado en una sola pasada agregada
+      const groupedPromise = baseFilters.select("categoria, estado, sum:monto, count:estado");
+
+      const [totalResult, groupedResult] = await Promise.all([totalPromise, groupedPromise]);
+
+      if (totalResult.error) {
+        console.error("Error fetching total estadísticas:", totalResult.error);
+        return { data: null, error: totalResult.error.message };
       }
 
-      // Calcular estadísticas
+      if (groupedResult.error) {
+        console.error("Error fetching grouped estadísticas:", groupedResult.error);
+        return { data: null, error: groupedResult.error.message };
+      }
+
       const stats: GastosStatsType = {
-        total_mes: data?.reduce((sum, gasto) => sum + gasto.monto, 0) || 0,
+        total_mes: (totalResult.data as any)?.sum || 0,
         total_categoria: {
           operativos: 0,
           administrativos: 0,
@@ -391,15 +401,18 @@ class GastosService {
         gastos_aprobados: 0,
       };
 
-      data?.forEach(gasto => {
-        // Sumar por categoría
-        if (gasto.categoria in stats.total_categoria) {
-          stats.total_categoria[gasto.categoria as CategoriaGasto] += gasto.monto;
+      (groupedResult.data || []).forEach(row => {
+        const categoria = (row as any).categoria as CategoriaGasto;
+        const estado = (row as any).estado as EstadoGasto;
+        const subtotal = (row as any).sum || 0;
+        const totalFilas = Number((row as any).count || 0);
+
+        if (categoria && categoria in stats.total_categoria) {
+          stats.total_categoria[categoria] += subtotal;
         }
 
-        // Contar por estado
-        if (gasto.estado === "pendiente") stats.gastos_pendientes++;
-        if (gasto.estado === "aprobado") stats.gastos_aprobados++;
+        if (estado === "pendiente") stats.gastos_pendientes += totalFilas;
+        if (estado === "aprobado") stats.gastos_aprobados += totalFilas;
       });
 
       return { data: stats, error: null };

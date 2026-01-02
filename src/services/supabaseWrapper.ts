@@ -14,9 +14,10 @@ export type LogLevel = "none" | "error" | "critical" | "all";
 export interface DbOperationOptions {
   tableName: string;
   operation: "SELECT" | "INSERT" | "UPDATE" | "DELETE";
-  logLevel?: LogLevel; // Reemplaza logQuery y logError
-  measureTime?: boolean;
+  logLevel?: LogLevel; // Reducir logs en rutas calientes
+  measureTime?: boolean; // Desactivado por defecto para minimizar overhead
   queryDescription?: string;
+  countStrategy?: "planned" | "exact" | "none"; // Solo aplica a consultas paginadas
 }
 
 /**
@@ -46,7 +47,7 @@ export class SupabaseWrapper {
         const { data, error } = await queryBuilder;
 
         if (error) {
-          // Solo loguear errores críticos o si está configurado
+          // Solo loguear errores si el nivel lo indica
           if (
             options.logLevel === "error" ||
             options.logLevel === "critical" ||
@@ -62,7 +63,7 @@ export class SupabaseWrapper {
           return { data: null, error: error.message };
         }
 
-        // Solo loguear SELECT críticos (como búsquedas específicas, no listados generales)
+        // Solo loguear SELECT críticos (no listados generales)
         if (options.logLevel === "critical" || options.logLevel === "all") {
           await loggingService.logSelect(
             options.tableName,
@@ -74,7 +75,7 @@ export class SupabaseWrapper {
         return { data: data as T, error: null };
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : `Error en ${options.operation}`;
-        if (options.logLevel !== "none") {
+        if (options.logLevel && options.logLevel !== "none") {
           await loggingService.logError(
             options.tableName,
             options.operation,
@@ -86,7 +87,7 @@ export class SupabaseWrapper {
       }
     };
 
-    if (options.measureTime !== false) {
+    if (options.measureTime === true) {
       return measureExecutionTime(executeQuery, options.tableName, options.operation);
     }
 
@@ -111,15 +112,24 @@ export class SupabaseWrapper {
         const from = (page - 1) * limit;
         const to = from + limit - 1;
 
-        const query = queryBuilder
-          .select("*", { count: "exact" })
+        const countStrategy = options.countStrategy || "planned";
+        const selectWithCount =
+          countStrategy === "none"
+            ? queryBuilder.select("*")
+            : queryBuilder.select("*", {
+                count: countStrategy === "exact" ? "exact" : "planned",
+              });
+
+        const { data, error, count } = await selectWithCount
           .order(orderBy, { ascending: orderDirection === "asc" })
           .range(from, to);
 
-        const { data, error, count } = await query;
-
         if (error) {
-          if (options.logError !== false) {
+          if (
+            options.logLevel === "error" ||
+            options.logLevel === "critical" ||
+            options.logLevel === "all"
+          ) {
             await loggingService.logError(
               options.tableName,
               options.operation,
@@ -130,7 +140,7 @@ export class SupabaseWrapper {
           return { data: [], count: 0, error: error.message };
         }
 
-        if (options.logQuery && data) {
+        if (data && (options.logLevel === "critical" || options.logLevel === "all")) {
           await loggingService.logSelect(
             options.tableName,
             options.queryDescription || `get${options.tableName} page=${page} limit=${limit}`,
@@ -140,12 +150,12 @@ export class SupabaseWrapper {
 
         return {
           data: (data || []) as T[],
-          count: count || 0,
+          count: countStrategy === "none" ? 0 : count || 0,
           error: null,
         };
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : `Error en ${options.operation}`;
-        if (options.logError !== false) {
+        if (options.logLevel && options.logLevel !== "none") {
           await loggingService.logError(
             options.tableName,
             options.operation,
@@ -157,7 +167,7 @@ export class SupabaseWrapper {
       }
     };
 
-    if (options.measureTime !== false) {
+    if (options.measureTime === true) {
       return measureExecutionTime(executeQuery, options.tableName, options.operation);
     }
 
@@ -176,7 +186,11 @@ export class SupabaseWrapper {
         const { data, error } = await queryBuilder;
 
         if (error) {
-          if (options.logError !== false) {
+          if (
+            options.logLevel === "error" ||
+            options.logLevel === "critical" ||
+            options.logLevel === "all"
+          ) {
             await loggingService.logError(
               options.tableName,
               options.operation,
@@ -193,7 +207,7 @@ export class SupabaseWrapper {
         return { data: (Array.isArray(data) ? data[0] : data) as T, error: null };
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : `Error en ${options.operation}`;
-        if (options.logError !== false) {
+        if (options.logLevel && options.logLevel !== "none") {
           await loggingService.logError(
             options.tableName,
             options.operation,
@@ -205,7 +219,7 @@ export class SupabaseWrapper {
       }
     };
 
-    if (options.measureTime !== false) {
+    if (options.measureTime === true) {
       return measureExecutionTime(executeQuery, options.tableName, options.operation);
     }
 
@@ -224,7 +238,11 @@ export class SupabaseWrapper {
         const { data, error } = await queryBuilder;
 
         if (error) {
-          if (options.logError !== false) {
+          if (
+            options.logLevel === "error" ||
+            options.logLevel === "critical" ||
+            options.logLevel === "all"
+          ) {
             await loggingService.logError(
               options.tableName,
               options.operation,
@@ -241,7 +259,7 @@ export class SupabaseWrapper {
         return { data: (Array.isArray(data) ? data[0] : data) as T, error: null };
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : `Error en ${options.operation}`;
-        if (options.logError !== false) {
+        if (options.logLevel && options.logLevel !== "none") {
           await loggingService.logError(
             options.tableName,
             options.operation,
@@ -253,7 +271,7 @@ export class SupabaseWrapper {
       }
     };
 
-    if (options.measureTime !== false) {
+    if (options.measureTime === true) {
       return measureExecutionTime(executeQuery, options.tableName, options.operation);
     }
 
@@ -272,7 +290,11 @@ export class SupabaseWrapper {
         const { error } = await queryBuilder;
 
         if (error) {
-          if (options.logError !== false) {
+          if (
+            options.logLevel === "error" ||
+            options.logLevel === "critical" ||
+            options.logLevel === "all"
+          ) {
             await loggingService.logError(
               options.tableName,
               options.operation,
@@ -289,7 +311,7 @@ export class SupabaseWrapper {
         return { data: null, error: null };
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : `Error en ${options.operation}`;
-        if (options.logError !== false) {
+        if (options.logLevel && options.logLevel !== "none") {
           await loggingService.logError(
             options.tableName,
             options.operation,
@@ -301,7 +323,7 @@ export class SupabaseWrapper {
       }
     };
 
-    if (options.measureTime !== false) {
+    if (options.measureTime === true) {
       return measureExecutionTime(executeQuery, options.tableName, options.operation);
     }
 

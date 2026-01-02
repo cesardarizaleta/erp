@@ -20,9 +20,30 @@ export interface LogEntry {
 
 class LoggingService {
   private sessionId: string;
+  private cachedUserId: string | null = null;
+  private lastUserFetch = 0;
+  private readonly userTtlMs = 5 * 60 * 1000; // cache 5 minutos
 
   constructor() {
     this.sessionId = this.generateSessionId();
+  }
+
+  private async getUserId(): Promise<string | null> {
+    const now = Date.now();
+    if (this.cachedUserId && now - this.lastUserFetch < this.userTtlMs) {
+      return this.cachedUserId;
+    }
+
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      this.cachedUserId = user?.id || null;
+      this.lastUserFetch = now;
+      return this.cachedUserId;
+    } catch {
+      return null;
+    }
   }
 
   private generateSessionId(): string {
@@ -37,9 +58,7 @@ class LoggingService {
     executionTime?: number
   ): Promise<void> {
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const userId = await this.getUserId();
 
       const logEntry: LogEntry = {
         table_name: tableName,
@@ -57,7 +76,7 @@ class LoggingService {
       // Insertar directamente en logs (el sistema simplificado usa triggers para DML)
       const { error } = await supabase.from("logs").insert([
         {
-          user_id: user?.id,
+          user_id: userId,
           table_name: tableName,
           operation: "SELECT",
           query_text: queryText,
@@ -84,13 +103,11 @@ class LoggingService {
     metadata?: Record<string, unknown>
   ): Promise<void> {
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const userId = await this.getUserId();
 
       const { error } = await supabase.from("logs").insert([
         {
-          user_id: user?.id,
+          user_id: userId,
           table_name: tableName,
           operation,
           error_message: errorMessage,
@@ -118,14 +135,12 @@ class LoggingService {
     metadata?: Record<string, unknown>
   ): Promise<void> {
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const userId = await this.getUserId();
 
       // Insertar directamente en logs
       const { error } = await supabase.from("logs").insert([
         {
-          user_id: user?.id,
+          user_id: userId,
           table_name: "auth",
           operation,
           session_id: this.sessionId,

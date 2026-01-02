@@ -20,6 +20,7 @@ export class ClienteRepository implements IClienteRepository {
         operation: "SELECT",
         pagination: options,
         logLevel: "none", // No loguear listados generales
+        countStrategy: "planned",
         queryDescription: `getAllClientes page=${options.page} limit=${options.limit}`,
       }
     );
@@ -106,6 +107,7 @@ export class ClienteRepository implements IClienteRepository {
           orderDirection: "desc",
         },
         logLevel: "none", // Búsquedas no son críticas
+        countStrategy: "planned",
         queryDescription: `searchClientes query=${query}`,
       }
     );

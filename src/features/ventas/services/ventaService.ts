@@ -29,7 +29,8 @@ class VentaService {
           orderBy: "fecha_venta",
           orderDirection: "desc",
         },
-        logQuery: true,
+        logLevel: "none",
+        countStrategy: "planned",
         queryDescription: `getVentas page=${page} limit=${limit}`,
       }
     );
@@ -54,40 +55,28 @@ class VentaService {
   // Obtener venta por ID con items
   async getVentaById(id: string): Promise<ApiResponse<{ venta: Venta; items: VentaItem[] }>> {
     try {
-      // Obtener la venta con información del cliente
-      const { data: ventaData, error: ventaError } = await supabase
+      const { data, error } = await supabase
         .from("ventas")
         .select(
           `
           *,
-          clientes:cliente_id (
-            nombre
-          )
+          clientes:cliente_id ( nombre ),
+          venta_items (*)
         `
         )
         .eq("id", id)
         .single();
 
-      if (ventaError) {
-        return { data: null, error: ventaError.message };
-      }
-
-      // Obtener los items de la venta
-      const { data: itemsData, error: itemsError } = await supabase
-        .from("venta_items")
-        .select("*")
-        .eq("venta_id", id);
-
-      if (itemsError) {
-        return { data: null, error: itemsError.message };
+      if (error || !data) {
+        return { data: null, error: error?.message || "Venta no encontrada" };
       }
 
       const venta = {
-        ...ventaData,
-        cliente: ventaData.clientes?.nombre || "Cliente desconocido",
+        ...data,
+        cliente: data.clientes?.nombre || "Cliente desconocido",
       };
 
-      return { data: { venta, items: itemsData || [] }, error: null };
+      return { data: { venta, items: data.venta_items || [] }, error: null };
     } catch {
       return { data: null, error: "Error al obtener venta" };
     }
@@ -156,29 +145,32 @@ class VentaService {
               return { data: null, error: itemsError.message };
             }
 
-            // Descontar stock del inventario
-            for (const item of itemsWithVentaId) {
-              if (item.producto_id) {
-                // Obtener stock actual
-                const { data: productoActual, error: fetchError } = await supabase
-                  .from("inventario")
-                  .select("stock")
-                  .eq("id", item.producto_id)
-                  .single();
+            // Descontar stock del inventario con menos roundtrips
+            const productosIds = itemsWithVentaId
+              .map(item => item.producto_id)
+              .filter(Boolean) as string[];
 
-                if (fetchError || !productoActual) {
-                  // Si falla la obtención, revertir todo
-                  await supabase.from("venta_items").delete().eq("venta_id", venta.id);
-                  await supabase.from("ventas").delete().eq("id", venta.id);
-                  return {
-                    data: null,
-                    error: `Error al obtener stock del producto: ${fetchError?.message || "Producto no encontrado"}`,
-                  };
-                }
+            if (productosIds.length > 0) {
+              const { data: stocksActuales, error: fetchError } = await supabase
+                .from("inventario")
+                .select("id, stock")
+                .in("id", productosIds);
 
-                const nuevoStock = productoActual.stock - item.cantidad;
-                if (nuevoStock < 0) {
-                  // Si no hay suficiente stock, revertir todo
+              if (fetchError || !stocksActuales) {
+                await supabase.from("venta_items").delete().eq("venta_id", venta.id);
+                await supabase.from("ventas").delete().eq("id", venta.id);
+                return {
+                  data: null,
+                  error: `Error al obtener stock del producto: ${fetchError?.message || "Producto no encontrado"}`,
+                };
+              }
+
+              const stockMap = new Map(stocksActuales.map(item => [item.id, item.stock]));
+
+              for (const item of itemsWithVentaId) {
+                if (!item.producto_id) continue;
+                const stockActual = stockMap.get(item.producto_id);
+                if (stockActual === undefined || stockActual - item.cantidad < 0) {
                   await supabase.from("venta_items").delete().eq("venta_id", venta.id);
                   await supabase.from("ventas").delete().eq("id", venta.id);
                   return {
@@ -186,18 +178,19 @@ class VentaService {
                     error: `Stock insuficiente para el producto ${item.producto_id}`,
                   };
                 }
+                stockMap.set(item.producto_id, stockActual - item.cantidad);
+              }
 
-                const { error: stockError } = await supabase
-                  .from("inventario")
-                  .update({ stock: nuevoStock })
-                  .eq("id", item.producto_id);
+              const updates = Array.from(stockMap.entries()).map(([idProducto, nuevoStock]) =>
+                supabase.from("inventario").update({ stock: nuevoStock }).eq("id", idProducto)
+              );
 
-                if (stockError) {
-                  // Si falla el descuento, revertir todo
-                  await supabase.from("venta_items").delete().eq("venta_id", venta.id);
-                  await supabase.from("ventas").delete().eq("id", venta.id);
-                  return { data: null, error: `Error al actualizar stock: ${stockError.message}` };
-                }
+              const updateResults = await Promise.all(updates);
+              const failed = updateResults.find(result => result.error);
+              if (failed?.error) {
+                await supabase.from("venta_items").delete().eq("venta_id", venta.id);
+                await supabase.from("ventas").delete().eq("id", venta.id);
+                return { data: null, error: `Error al actualizar stock: ${failed.error.message}` };
               }
             }
           }
@@ -208,7 +201,7 @@ class VentaService {
           };
 
           return { data: transformedVenta, error: null };
-        } catch {
+        } catch (err) {
           const errorMessage = err instanceof Error ? err.message : "Error al crear venta";
           await loggingService.logError(
             "ventas",
@@ -242,7 +235,7 @@ class VentaService {
       {
         tableName: this.tableName,
         operation: "UPDATE",
-        logQuery: true,
+        logLevel: "critical",
         queryDescription: `updateVenta id=${id}`,
       }
     );
@@ -274,33 +267,35 @@ class VentaService {
 
       // Restaurar stock
       if (items && items.length > 0) {
+        const productosIds = items.map(item => item.producto_id).filter(Boolean) as string[];
+        const { data: stocksActuales, error: fetchStockError } = await supabase
+          .from("inventario")
+          .select("id, stock")
+          .in("id", productosIds);
+
+        if (fetchStockError || !stocksActuales) {
+          return {
+            data: null,
+            error: `Error al obtener stock del producto: ${fetchStockError?.message || "Producto no encontrado"}`,
+          };
+        }
+
+        const stockMap = new Map(stocksActuales.map(item => [item.id, item.stock]));
+
         for (const item of items) {
-          if (item.producto_id) {
-            // Obtener stock actual
-            const { data: productoActual, error: fetchStockError } = await supabase
-              .from("inventario")
-              .select("stock")
-              .eq("id", item.producto_id)
-              .single();
+          if (!item.producto_id) continue;
+          const stockActual = stockMap.get(item.producto_id) ?? 0;
+          stockMap.set(item.producto_id, stockActual + item.cantidad);
+        }
 
-            if (fetchStockError || !productoActual) {
-              return {
-                data: null,
-                error: `Error al obtener stock del producto: ${fetchStockError?.message || "Producto no encontrado"}`,
-              };
-            }
+        const updates = Array.from(stockMap.entries()).map(([idProducto, nuevoStock]) =>
+          supabase.from("inventario").update({ stock: nuevoStock }).eq("id", idProducto)
+        );
 
-            const nuevoStock = productoActual.stock + item.cantidad;
-
-            const { error: stockError } = await supabase
-              .from("inventario")
-              .update({ stock: nuevoStock })
-              .eq("id", item.producto_id);
-
-            if (stockError) {
-              return { data: null, error: `Error al restaurar stock: ${stockError.message}` };
-            }
-          }
+        const updateResults = await Promise.all(updates);
+        const failed = updateResults.find(result => result.error);
+        if (failed?.error) {
+          return { data: null, error: `Error al restaurar stock: ${failed.error.message}` };
         }
       }
 
@@ -343,7 +338,7 @@ class VentaService {
             nombre
           )
         `,
-          { count: "exact" }
+          { count: "planned" }
         )
         .or(`id.ilike.%${query}%`)
         .range(from, to)

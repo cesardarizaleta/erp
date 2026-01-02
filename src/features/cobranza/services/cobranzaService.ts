@@ -16,7 +16,8 @@ class CobranzaService {
         orderBy: "id",
         orderDirection: "desc",
       },
-      logQuery: true,
+      logLevel: "none",
+      countStrategy: "planned",
       queryDescription: `getCobranzas page=${page} limit=${limit}`,
     });
   }
@@ -28,7 +29,7 @@ class CobranzaService {
       {
         tableName: this.tableName,
         operation: "SELECT",
-        logQuery: true,
+        logLevel: "none",
         queryDescription: `getCobranzaById id=${id}`,
       }
     );
@@ -53,7 +54,7 @@ class CobranzaService {
       {
         tableName: this.tableName,
         operation: "INSERT",
-        logQuery: true,
+        logLevel: "critical",
         queryDescription: "createCobranza",
       }
     );
@@ -66,7 +67,7 @@ class CobranzaService {
       {
         tableName: this.tableName,
         operation: "UPDATE",
-        logQuery: true,
+        logLevel: "critical",
         queryDescription: `updateCobranza id=${id}`,
       }
     );
@@ -77,7 +78,7 @@ class CobranzaService {
     return SupabaseWrapper.delete(SupabaseWrapper.from(this.tableName).delete().eq("id", id), {
       tableName: this.tableName,
       operation: "DELETE",
-      logQuery: true,
+      logLevel: "critical",
       queryDescription: `deleteCobranza id=${id}`,
     });
   }
@@ -99,7 +100,8 @@ class CobranzaService {
           orderBy: "id",
           orderDirection: "desc",
         },
-        logQuery: true,
+        logLevel: "none",
+        countStrategy: "planned",
         queryDescription: `searchCobranzas query=${query}`,
       }
     );
@@ -115,7 +117,7 @@ class CobranzaService {
       {
         tableName: this.tableName,
         operation: "SELECT",
-        logQuery: true,
+        logLevel: "none",
         queryDescription: "getCobranzasPendientes",
       }
     );
@@ -132,7 +134,7 @@ class CobranzaService {
       {
         tableName: this.tableName,
         operation: "UPDATE",
-        logQuery: true,
+        logLevel: "critical",
         queryDescription: `marcarComoPagada id=${id}`,
       }
     );
