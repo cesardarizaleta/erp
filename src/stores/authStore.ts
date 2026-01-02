@@ -16,7 +16,7 @@ interface AuthState {
 }
 
 // Store unificado para autenticación (reemplaza AuthContext)
-export const useAuthStore = create<AuthState>((set, get) => ({
+export const useAuthStore = create<AuthState>((set, _get) => ({
   user: null,
   loading: true,
   initialized: false,

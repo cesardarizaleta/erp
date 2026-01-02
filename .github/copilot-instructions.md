@@ -5,6 +5,7 @@
 Este proyecto es una aplicación React moderna de gestión empresarial con la siguiente arquitectura:
 
 ### **Tecnologías Principales**
+
 - **Frontend**: React 18 + TypeScript
 - **Build Tool**: Vite
 - **Backend**: Supabase (PostgreSQL + Auth)
@@ -16,6 +17,7 @@ Este proyecto es una aplicación React moderna de gestión empresarial con la si
 - **PWA**: Vite PWA Plugin
 
 ### **Estructura por Features**
+
 Organización modular por funcionalidades independientes:
 
 ```
@@ -32,12 +34,14 @@ src/features/[feature]/
 ## 📋 Buenas Prácticas de Desarrollo
 
 ### **1. Arquitectura por Features**
+
 - ✅ Crear nuevas funcionalidades usando el script: `npm run generate:feature <name>`
 - ✅ Mantener código relacionado agrupado en módulos independientes
 - ✅ Usar imports absolutos con `@/` para referencias
 - ✅ Exportar desde `index.ts` para facilitar imports
 
 ### **2. State Management (Zustand)**
+
 ```typescript
 interface StoreState {
   // Estado
@@ -55,40 +59,45 @@ export const useStore = create<StoreState>((set, get) => ({
 ```
 
 ### **3. Servicios y API**
+
 - ✅ Usar servicios para lógica de negocio
 - ✅ Implementar manejo de errores consistente con `ErrorFactory`
 - ✅ Usar React Query para data fetching
 - ✅ Tipos consistentes en `src/services/types.ts`
 
 ### **4. Componentes**
+
 - ✅ Usar componentes de shadcn/ui para UI consistente
 - ✅ Implementar loading states y error boundaries
 - ✅ Usar hooks personalizados para lógica reutilizable
 - ✅ Formularios con React Hook Form + Zod validation
 
 ### **5. Tipos TypeScript**
+
 - ✅ Definir interfaces específicas por feature
 - ✅ Usar tipos estrictos, evitar `any`
 - ✅ Exportar tipos desde archivos dedicados
 - ✅ Usar utility types cuando sea apropiado
 
 ### **6. Manejo de Errores**
+
 ```typescript
-import { ErrorFactory, ErrorType } from '@/lib/errors';
+import { ErrorFactory, ErrorType } from "@/lib/errors";
 
 // Para errores de red
-throw ErrorFactory.network('Error de conexión');
+throw ErrorFactory.network("Error de conexión");
 
 // Para errores de validación
-throw ErrorFactory.validation('Campo requerido');
+throw ErrorFactory.validation("Campo requerido");
 
 // Para errores de autenticación
-throw ErrorFactory.authentication('Usuario no autorizado');
+throw ErrorFactory.authentication("Usuario no autorizado");
 ```
 
 ## 🛠️ Comandos Disponibles
 
 ### **Desarrollo**
+
 ```bash
 npm run dev              # Servidor de desarrollo
 npm run build            # Build de producción
@@ -97,6 +106,7 @@ npm run preview          # Preview del build
 ```
 
 ### **Calidad de Código**
+
 ```bash
 npm run lint             # Ejecutar ESLint
 npm run lint:fix         # Corregir errores de ESLint automáticamente
@@ -106,6 +116,7 @@ npm run code-quality     # Ejecutar todas las verificaciones
 ```
 
 ### **Generación de Features**
+
 ```bash
 # Crear nueva feature automáticamente
 node scripts/generate-feature.cjs <feature-name>
@@ -118,6 +129,7 @@ node scripts/generate-feature.cjs reportes
 ## 📁 Patrones de Código
 
 ### **Creación de un Nuevo Servicio**
+
 ```typescript
 // src/features/[feature]/services/[feature]Service.ts
 import { supabaseWrapper } from '@/services/supabaseWrapper';
@@ -146,6 +158,7 @@ export const [feature]Service = {
 ```
 
 ### **Hook Personalizado**
+
 ```typescript
 // src/features/[feature]/hooks/use[Feature].ts
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -183,6 +196,7 @@ export function use[Feature]() {
 ```
 
 ### **Componente con Formulario**
+
 ```tsx
 // src/features/[feature]/components/[Feature]Form.tsx
 import { useForm } from 'react-hook-form';
@@ -240,6 +254,7 @@ export function [Feature]Form({ onSubmit, isLoading }: [Feature]FormProps) {
 ```
 
 ### **Página Principal del Feature**
+
 ```tsx
 // src/features/[feature]/pages/[Feature].tsx
 import { useState } from 'react';
@@ -320,4 +335,4 @@ export function [Feature]Page() {
 
 ---
 
-*Estas instrucciones se actualizan automáticamente con el proyecto. Mantener sincronizado con las mejores prácticas del equipo.*
+_Estas instrucciones se actualizan automáticamente con el proyecto. Mantener sincronizado con las mejores prácticas del equipo._

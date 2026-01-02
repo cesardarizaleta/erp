@@ -1,5 +1,5 @@
 import React from "react";
-import { AlertCircle, CheckCircle, XCircle, Info } from "lucide-react";
+import { AlertCircle, XCircle, Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
