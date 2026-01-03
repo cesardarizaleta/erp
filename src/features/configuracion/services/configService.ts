@@ -1,3 +1,4 @@
+import { supabase } from "@/integrations/supabase/client";
 import type {
   ConfiguracionEmpresa,
   ConfiguracionNotificaciones,
@@ -9,21 +10,34 @@ class ConfigService {
   // Obtener configuración de empresa
   async getEmpresaConfig(userId: string): Promise<ApiResponse<ConfiguracionEmpresa>> {
     try {
-      // NOTE: Tabla no existe en Supabase, usando datos mock
-      const mockData: ConfiguracionEmpresa = {
-        id: "1",
-        user_id: userId,
-        nombre_empresa: "EXAMPLE",
-        rif_nit: "J-123456789",
-        telefono: "+58 412 123 4567",
-        email: "info@example.com",
-        direccion: "Av. Principal, Ciudad Bolívar, Venezuela",
-        logo_url: "/logo.jpg",
-      };
+      const { data, error } = await supabase
+        .from("configuracion_empresa")
+        .select("*")
+        .eq("user_id", userId)
+        .single();
 
-      return { data: mockData, error: null };
-    } catch {
-      return { data: null, error: "Error al obtener configuración de empresa" };
+      if (error && error.code !== "PGRST116") throw error;
+
+      if (!data) {
+        // Si no existe, devolver valores por defecto pero no guardar aún
+        return {
+          data: {
+            id: "",
+            user_id: userId,
+            nombre_empresa: "EXAMPLE",
+            rif_nit: "J-123456789",
+            telefono: "+58 412 123 4567",
+            email: "info@example.com",
+            direccion: "Av. Principal, Ciudad Bolívar, Venezuela",
+            logo_url: "/logo.jpg",
+          },
+          error: null,
+        };
+      }
+
+      return { data, error: null };
+    } catch (error: any) {
+      return { data: null, error: error.message || "Error al obtener configuración de empresa" };
     }
   }
 
@@ -32,39 +46,52 @@ class ConfigService {
     config: Partial<ConfiguracionEmpresa>
   ): Promise<ApiResponse<ConfiguracionEmpresa>> {
     try {
-      // NOTE: Tabla no existe en Supabase, simulando actualización
-      const updatedData: ConfiguracionEmpresa = {
-        id: "1",
-        user_id: config.user_id || "",
-        nombre_empresa: config.nombre_empresa || "EXAMPLE",
-        rif_nit: config.rif_nit || "J-123456789",
-        telefono: config.telefono || "+58 412 123 4567",
-        email: config.email || "info@example.com",
-        direccion: config.direccion || "Av. Principal, Ciudad Bolívar, Venezuela",
-        logo_url: config.logo_url || "/logo.jpg",
-      };
+      const { data, error } = await supabase
+        .from("configuracion_empresa")
+        .upsert({
+          ...config,
+          updated_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
 
-      return { data: updatedData, error: null };
-    } catch {
-      return { data: null, error: "Error al actualizar configuración de empresa" };
+      if (error) throw error;
+      return { data, error: null };
+    } catch (error: any) {
+      return { data: null, error: error.message || "Error al actualizar configuración de empresa" };
     }
   }
 
   // Obtener configuración de notificaciones
   async getNotificacionesConfig(userId: string): Promise<ApiResponse<ConfiguracionNotificaciones>> {
     try {
-      // NOTE: Tabla no existe en Supabase, usando datos mock
-      const mockData: ConfiguracionNotificaciones = {
-        id: "1",
-        user_id: userId,
-        stock_bajo: true,
-        facturas_vencidas: true,
-        nuevas_ventas: false,
-      };
+      const { data, error } = await supabase
+        .from("configuracion_notificaciones")
+        .select("*")
+        .eq("user_id", userId)
+        .single();
 
-      return { data: mockData, error: null };
-    } catch {
-      return { data: null, error: "Error al obtener configuración de notificaciones" };
+      if (error && error.code !== "PGRST116") throw error;
+
+      if (!data) {
+        return {
+          data: {
+            id: "",
+            user_id: userId,
+            stock_bajo: true,
+            facturas_vencidas: true,
+            nuevas_ventas: false,
+          },
+          error: null,
+        };
+      }
+
+      return { data, error: null };
+    } catch (error: any) {
+      return {
+        data: null,
+        error: error.message || "Error al obtener configuración de notificaciones",
+      };
     }
   }
 
@@ -73,25 +100,29 @@ class ConfigService {
     config: Partial<ConfiguracionNotificaciones>
   ): Promise<ApiResponse<ConfiguracionNotificaciones>> {
     try {
-      // NOTE: Tabla no existe en Supabase, simulando actualización
-      const updatedData: ConfiguracionNotificaciones = {
-        id: "1",
-        user_id: config.user_id || "",
-        stock_bajo: config.stock_bajo ?? true,
-        facturas_vencidas: config.facturas_vencidas ?? true,
-        nuevas_ventas: config.nuevas_ventas ?? false,
-      };
+      const { data, error } = await supabase
+        .from("configuracion_notificaciones")
+        .upsert({
+          ...config,
+          updated_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
 
-      return { data: updatedData, error: null };
-    } catch {
-      return { data: null, error: "Error al actualizar configuración de notificaciones" };
+      if (error) throw error;
+      return { data, error: null };
+    } catch (error: any) {
+      return {
+        data: null,
+        error: error.message || "Error al actualizar configuración de notificaciones",
+      };
     }
   }
 
   // Obtener configuración del sistema
   async getSistemaConfig(userId: string): Promise<ApiResponse<ConfiguracionSistema>> {
     try {
-      // NOTE: Tabla no existe en Supabase, usando datos mock
+      // El sistema es mayormente estático por ahora
       const mockData: ConfiguracionSistema = {
         id: "1",
         user_id: userId,
@@ -112,7 +143,6 @@ class ConfigService {
     config: Partial<ConfiguracionSistema>
   ): Promise<ApiResponse<ConfiguracionSistema>> {
     try {
-      // NOTE: Tabla no existe en Supabase, simulando actualización
       const updatedData: ConfiguracionSistema = {
         id: "1",
         user_id: config.user_id || "",

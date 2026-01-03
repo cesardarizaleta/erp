@@ -194,7 +194,7 @@ class GastosService {
         notas: data.notas,
         fecha_creacion: new Date().toISOString(),
         estado: "pendiente" as EstadoGasto,
-        usuario_id: (await supabase.auth.getUser()).data.user?.id,
+        user_id: (await supabase.auth.getUser()).data.user?.id,
       };
 
       // Solo agregar comprobante_url si se subió exitosamente

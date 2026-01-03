@@ -1,4 +1,4 @@
-# GitHub Copilot Instructions - Carbon EXAMPLE
+# GitHub Copilot Instructions - EXAMPLE
 
 ## 🏗️ Arquitectura del Proyecto
 

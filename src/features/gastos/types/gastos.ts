@@ -12,7 +12,7 @@ export interface Gastos {
   metodo_pago: MetodoPago;
   estado: EstadoGasto;
   notas?: string;
-  usuario_id: string; // Quién registró el gasto
+  user_id: string; // Quién registró el gasto
   comprobante_url?: string; // URL del archivo adjunto
   aprobado_por?: string;
   fecha_aprobacion?: string;
