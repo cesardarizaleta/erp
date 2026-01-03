@@ -1,4 +1,4 @@
-# Carbon Zulianita ERP
+# Carbon EXAMPLE ERP
 
 ![Inventario](public/inventory.png)
 
@@ -35,7 +35,7 @@ Una suite completa de gestión empresarial diseñada para pequeñas y medianas e
 
    ```bash
    git clone <URL_DEL_REPOSITORIO>
-   cd carbon-zulianita-suite
+   cd carbon-example-suite
    ```
 
 2. **Instala dependencias**:
@@ -231,4 +231,4 @@ Para preguntas o soporte, contacta al equipo de desarrollo.
 
 ---
 
-¡Gracias por usar Carbon Zulianita Suite! 🚀
+¡Gracias por usar Carbon EXAMPLE Suite! 🚀

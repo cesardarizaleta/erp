@@ -8,20 +8,20 @@ type DeepPartial<T> = {
 // Configuración base de la aplicación. Modifica app-config.json para personalizar sin tocar código.
 const DEFAULT_APP_CONFIG = {
   BRAND: {
-    NAME: "La Zulianita",
-    SHORT_NAME: "Zulianita",
+    NAME: "EXAMPLE",
+    SHORT_NAME: "EXAMPLE",
     TAGLINE: "Sistema ERP",
-    FOOTER_TEXT: "Sistema de gestión empresarial • La Zulianita © 2025",
-    LOGO_URL: "/logo-zulianita.jpg",
+    FOOTER_TEXT: "Sistema de gestión empresarial • EXAMPLE © 2025",
+    LOGO_URL: "/logo.jpg",
     PRIMARY_TEXT_CLASS: "text-primary",
     ACCENT_TEXT_CLASS: "text-accent",
     GRADIENT_FROM: "from-primary/20",
     GRADIENT_TO: "to-accent/20",
   },
 
-  NAME: "La Zulianita",
+  NAME: "EXAMPLE",
   VERSION: "1.0.0",
-  DESCRIPTION: "Sistema de gestión para La Zulianita",
+  DESCRIPTION: "Sistema de gestión para EXAMPLE",
 
   INVENTORY: {
     MIN_STOCK_ALERT: 5,

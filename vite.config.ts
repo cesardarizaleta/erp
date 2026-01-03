@@ -67,9 +67,9 @@ export default defineConfig(({ mode }) => ({
         "logo.jpg"
       ],
       manifest: {
-        name: "La Zulianita - Sistema de Gestión",
-        short_name: "La Zulianita",
-        description: "Sistema de gestión integral para La Zulianita - Inventario, Ventas, Clientes y Cobranza",
+        name: "EXAMPLE - Sistema de Gestión",
+        short_name: "EXAMPLE",
+        description: "Sistema de gestión integral para EXAMPLE - Inventario, Ventas, Clientes y Cobranza",
         theme_color: "#000000",
         background_color: "#ffffff",
         display: "standalone",
@@ -81,27 +81,27 @@ export default defineConfig(({ mode }) => ({
         categories: ["business", "productivity"],
         icons: [
           {
-            src: "pwa-192x192.png",
+            src: "logo.jpg",
             sizes: "192x192",
-            type: "image/png",
+            type: "image/jpeg",
             purpose: "any maskable",
           },
           {
-            src: "pwa-512x512.png",
+            src: "logo.jpg",
             sizes: "512x512",
-            type: "image/png",
+            type: "image/jpeg",
             purpose: "any maskable",
           },
           {
-            src: "apple-touch-icon.png",
+            src: "logo.jpg",
             sizes: "180x180",
-            type: "image/png",
+            type: "image/jpeg",
             purpose: "any",
           },
           {
-            src: "favicon.ico",
+            src: "logo.jpg",
             sizes: "48x48",
-            type: "image/x-icon",
+            type: "image/jpeg",
             purpose: "any",
           },
         ],
