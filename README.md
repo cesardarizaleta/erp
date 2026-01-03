@@ -1,7 +1,5 @@
 # Carbon EXAMPLE ERP
 
-![Inventario](public/inventory.png)
-
 Una suite completa de gestión empresarial diseñada para pequeñas y medianas empresas. Gestiona inventarios, ventas, clientes y cobranzas de manera eficiente y moderna.
 
 ## 🚀 Características
