@@ -6,16 +6,19 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthGuard } from "@/components/AuthGuard";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { StoreInitializer } from "@/components/StoreInitializer";
-import Dashboard from "./features/dashboard/pages/Dashboard";
-import Inventario from "./features/inventario/pages/Inventario";
-import Ventas from "./features/ventas/pages/Ventas";
-import Cobranza from "./features/cobranza/pages/Cobranza";
-import Clientes from "./features/clientes/pages/Clientes";
-import Configuracion from "./features/configuracion/pages/Configuracion";
-import Logs from "./features/logs/pages/Logs";
-import Gastos from "./features/gastos/pages/Gastos";
-import Login from "./features/auth/pages/Login";
-import NotFound from "./features/error/pages/NotFound";
+import { lazy, Suspense } from "react";
+
+// Lazy loading de páginas para optimizar el tamaño de los chunks
+const Dashboard = lazy(() => import("./features/dashboard/pages/Dashboard"));
+const Inventario = lazy(() => import("./features/inventario/pages/Inventario"));
+const Ventas = lazy(() => import("./features/ventas/pages/Ventas"));
+const Cobranza = lazy(() => import("./features/cobranza/pages/Cobranza"));
+const Clientes = lazy(() => import("./features/clientes/pages/Clientes"));
+const Configuracion = lazy(() => import("./features/configuracion/pages/Configuracion"));
+const Logs = lazy(() => import("./features/logs/pages/Logs"));
+const Gastos = lazy(() => import("./features/gastos/pages/Gastos"));
+const Login = lazy(() => import("./features/auth/pages/Login"));
+const NotFound = lazy(() => import("./features/error/pages/NotFound"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -47,86 +50,94 @@ const App = () => (
             v7_relativeSplatPath: true,
           }}
         >
-          <Routes>
-            {/* Rutas públicas */}
-            <Route
-              path="/login"
-              element={
-                <AuthGuard requireAuth={false}>
-                  <Login />
-                </AuthGuard>
-              }
-            />
+          <Suspense
+            fallback={
+              <div className="flex h-screen w-full items-center justify-center bg-background">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+              </div>
+            }
+          >
+            <Routes>
+              {/* Rutas públicas */}
+              <Route
+                path="/login"
+                element={
+                  <AuthGuard requireAuth={false}>
+                    <Login />
+                  </AuthGuard>
+                }
+              />
 
-            {/* Rutas protegidas */}
-            <Route
-              path="/"
-              element={
-                <AuthGuard>
-                  <Dashboard />
-                </AuthGuard>
-              }
-            />
-            <Route
-              path="/inventario"
-              element={
-                <AuthGuard>
-                  <Inventario />
-                </AuthGuard>
-              }
-            />
-            <Route
-              path="/ventas"
-              element={
-                <AuthGuard>
-                  <Ventas />
-                </AuthGuard>
-              }
-            />
-            <Route
-              path="/cobranza"
-              element={
-                <AuthGuard>
-                  <Cobranza />
-                </AuthGuard>
-              }
-            />
-            <Route
-              path="/clientes"
-              element={
-                <AuthGuard>
-                  <Clientes />
-                </AuthGuard>
-              }
-            />
-            <Route
-              path="/configuracion"
-              element={
-                <AuthGuard>
-                  <Configuracion />
-                </AuthGuard>
-              }
-            />
-            <Route
-              path="/logs"
-              element={
-                <AuthGuard>
-                  <Logs />
-                </AuthGuard>
-              }
-            />
-            <Route
-              path="/gastos"
-              element={
-                <AuthGuard>
-                  <Gastos />
-                </AuthGuard>
-              }
-            />
+              {/* Rutas protegidas */}
+              <Route
+                path="/"
+                element={
+                  <AuthGuard>
+                    <Dashboard />
+                  </AuthGuard>
+                }
+              />
+              <Route
+                path="/inventario"
+                element={
+                  <AuthGuard>
+                    <Inventario />
+                  </AuthGuard>
+                }
+              />
+              <Route
+                path="/ventas"
+                element={
+                  <AuthGuard>
+                    <Ventas />
+                  </AuthGuard>
+                }
+              />
+              <Route
+                path="/cobranza"
+                element={
+                  <AuthGuard>
+                    <Cobranza />
+                  </AuthGuard>
+                }
+              />
+              <Route
+                path="/clientes"
+                element={
+                  <AuthGuard>
+                    <Clientes />
+                  </AuthGuard>
+                }
+              />
+              <Route
+                path="/configuracion"
+                element={
+                  <AuthGuard>
+                    <Configuracion />
+                  </AuthGuard>
+                }
+              />
+              <Route
+                path="/logs"
+                element={
+                  <AuthGuard>
+                    <Logs />
+                  </AuthGuard>
+                }
+              />
+              <Route
+                path="/gastos"
+                element={
+                  <AuthGuard>
+                    <Gastos />
+                  </AuthGuard>
+                }
+              />
 
-            {/* Ruta 404 */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+              {/* Ruta 404 */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>

@@ -12,8 +12,7 @@ import { APP_CONFIG } from "@/constants";
 
 const Login = () => {
   const brand = APP_CONFIG.BRAND;
-  const logoSrc =
-    brand.LOGO_URL && brand.LOGO_URL !== "/logo.jpg" ? brand.LOGO_URL : logoExample;
+  const logoSrc = brand.LOGO_URL && brand.LOGO_URL !== "/logo.jpg" ? brand.LOGO_URL : logoExample;
   const brandName = brand.NAME || APP_CONFIG.NAME;
   const brandTagline = brand.TAGLINE || "Sistema ERP";
   const footerText = brand.FOOTER_TEXT || `Sistema de gestión • ${brandName}`;

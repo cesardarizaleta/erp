@@ -14,13 +14,15 @@ args.forEach(arg => {
 });
 
 if (!params.name) {
-  console.error("Uso: node scripts/customize.cjs --name=\"Mi Empresa\" [--primary=\"50 100% 50%\"] [--accent=\"0 85% 55%\"]");
+  console.error(
+    'Uso: node scripts/customize.cjs --name="Mi Empresa" [--primary="50 100% 50%"] [--accent="0 85% 55%"]'
+  );
   process.exit(1);
 }
 
 const appName = params.name;
 const primaryColor = params.primary || "50 100% 50%"; // Default yellow-ish
-const accentColor = params.accent || "0 85% 55%";   // Default red-ish
+const accentColor = params.accent || "0 85% 55%"; // Default red-ish
 
 console.log(`🚀 Personalizando aplicación para: ${appName}`);
 
@@ -42,14 +44,38 @@ const htmlPath = path.join(__dirname, "..", "index.html");
 if (fs.existsSync(htmlPath)) {
   let html = fs.readFileSync(htmlPath, "utf8");
   html = html.replace(/<title>.*?<\/title>/, `<title>${appName} - Sistema de Gestión<\/title>`);
-  html = html.replace(/<meta name="description" content=".*?" \/>/, `<meta name="description" content="Sistema de gestión integral para ${appName} - Inventario, Ventas, Clientes y Cobranza" \/>`);
-  html = html.replace(/<meta name="author" content=".*?" \/>/, `<meta name="author" content="${appName}" \/>`);
-  html = html.replace(/<meta name="apple-mobile-web-app-title" content=".*?" \/>/, `<meta name="apple-mobile-web-app-title" content="${appName}" \/>`);
-  html = html.replace(/<meta property="og:site_name" content=".*?" \/>/, `<meta property="og:site_name" content="${appName}" \/>`);
-  html = html.replace(/<meta property="og:title" content=".*?" \/>/, `<meta property="og:title" content="${appName} - Sistema de Gestión" \/>`);
-  html = html.replace(/<meta property="og:description" content=".*?" \/>/, `<meta property="og:description" content="Sistema de gestión integral para ${appName} - Inventario, Ventas, Clientes y Cobranza" \/>`);
-  html = html.replace(/<meta name="twitter:title" content=".*?" \/>/, `<meta name="twitter:title" content="${appName} - Sistema de Gestión" \/>`);
-  html = html.replace(/<meta name="twitter:description" content=".*?" \/>/, `<meta name="twitter:description" content="Sistema de gestión integral para ${appName}" \/>`);
+  html = html.replace(
+    /<meta name="description" content=".*?" \/>/,
+    `<meta name="description" content="Sistema de gestión integral para ${appName} - Inventario, Ventas, Clientes y Cobranza" \/>`
+  );
+  html = html.replace(
+    /<meta name="author" content=".*?" \/>/,
+    `<meta name="author" content="${appName}" \/>`
+  );
+  html = html.replace(
+    /<meta name="apple-mobile-web-app-title" content=".*?" \/>/,
+    `<meta name="apple-mobile-web-app-title" content="${appName}" \/>`
+  );
+  html = html.replace(
+    /<meta property="og:site_name" content=".*?" \/>/,
+    `<meta property="og:site_name" content="${appName}" \/>`
+  );
+  html = html.replace(
+    /<meta property="og:title" content=".*?" \/>/,
+    `<meta property="og:title" content="${appName} - Sistema de Gestión" \/>`
+  );
+  html = html.replace(
+    /<meta property="og:description" content=".*?" \/>/,
+    `<meta property="og:description" content="Sistema de gestión integral para ${appName} - Inventario, Ventas, Clientes y Cobranza" \/>`
+  );
+  html = html.replace(
+    /<meta name="twitter:title" content=".*?" \/>/,
+    `<meta name="twitter:title" content="${appName} - Sistema de Gestión" \/>`
+  );
+  html = html.replace(
+    /<meta name="twitter:description" content=".*?" \/>/,
+    `<meta name="twitter:description" content="Sistema de gestión integral para ${appName}" \/>`
+  );
   fs.writeFileSync(htmlPath, html);
   console.log("✅ index.html actualizado");
 }
@@ -69,7 +95,10 @@ if (fs.existsSync(viteConfigPath)) {
   let viteConfig = fs.readFileSync(viteConfigPath, "utf8");
   viteConfig = viteConfig.replace(/name: ".*?"/g, `name: "${appName} - Sistema de Gestión"`);
   viteConfig = viteConfig.replace(/short_name: ".*?"/g, `short_name: "${appName}"`);
-  viteConfig = viteConfig.replace(/description: ".*?"/g, `description: "Sistema de gestión integral para ${appName} - Inventario, Ventas, Clientes y Cobranza"`);
+  viteConfig = viteConfig.replace(
+    /description: ".*?"/g,
+    `description: "Sistema de gestión integral para ${appName} - Inventario, Ventas, Clientes y Cobranza"`
+  );
   fs.writeFileSync(viteConfigPath, viteConfig);
   console.log("✅ vite.config.ts actualizado");
 }
@@ -78,14 +107,14 @@ if (fs.existsSync(viteConfigPath)) {
 const cssPath = path.join(__dirname, "..", "src", "index.css");
 if (fs.existsSync(cssPath)) {
   let css = fs.readFileSync(cssPath, "utf8");
-  
+
   // Reemplazar variables de color en :root
   css = css.replace(/--primary: .*?;/g, `--primary: ${primaryColor};`);
   css = css.replace(/--ring: .*?;/g, `--ring: ${primaryColor};`);
   css = css.replace(/--sidebar-primary: .*?;/g, `--sidebar-primary: ${primaryColor};`);
   css = css.replace(/--sidebar-ring: .*?;/g, `--sidebar-ring: ${primaryColor};`);
   css = css.replace(/--chart-1: .*?;/g, `--chart-1: ${primaryColor};`);
-  
+
   css = css.replace(/--accent: .*?;/g, `--accent: ${accentColor};`);
   css = css.replace(/--chart-2: .*?;/g, `--chart-2: ${accentColor};`);
 

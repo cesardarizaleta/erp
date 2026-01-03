@@ -18,6 +18,9 @@ npm-debug.log*
 # Environment files
 .env
 .env.local
+
+# Templates (contain placeholders)
+templates/
 .env.development.local
 .env.test.local
 .env.production.local

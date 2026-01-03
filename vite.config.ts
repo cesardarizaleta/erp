@@ -16,10 +16,17 @@ export default defineConfig(({ mode }) => ({
       output: {
         manualChunks: {
           // Separar dependencias grandes en chunks separados
-          vendor: ["react", "react-dom"],
-          ui: ["@radix-ui/react-dialog", "@radix-ui/react-select", "@radix-ui/react-dropdown-menu"],
+          vendor: ["react", "react-dom", "react-router-dom"],
+          ui: [
+            "@radix-ui/react-dialog",
+            "@radix-ui/react-select",
+            "@radix-ui/react-dropdown-menu",
+            "@radix-ui/react-popover",
+            "@radix-ui/react-tooltip",
+          ],
           supabase: ["@supabase/supabase-js"],
           charts: ["recharts"],
+          utils: ["date-fns", "lucide-react", "zustand"],
         },
       },
     },
@@ -64,12 +71,13 @@ export default defineConfig(({ mode }) => ({
         "masked-icon.svg",
         "pwa-192x192.png",
         "pwa-512x512.png",
-        "logo.jpg"
+        "logo.jpg",
       ],
       manifest: {
         name: "EXAMPLE - Sistema de Gestión",
         short_name: "EXAMPLE",
-        description: "Sistema de gestión integral para EXAMPLE - Inventario, Ventas, Clientes y Cobranza",
+        description:
+          "Sistema de gestión integral para EXAMPLE - Inventario, Ventas, Clientes y Cobranza",
         theme_color: "#000000",
         background_color: "#ffffff",
         display: "standalone",

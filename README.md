@@ -59,12 +59,12 @@ Una suite completa de gestión empresarial diseñada para pequeñas y medianas e
    VITE_DATABASE_URL=postgresql://postgres:tu_password@db.tu-project-id.supabase.co:5432/postgres
    ```
 
-4. **Configura Supabase**:
+5. **Configura Supabase**:
    - Crea un proyecto en Supabase.
    - Ejecuta el SQL para crear tablas (ver sección Configuración).
    - Obtén la clave anónima del dashboard de Supabase.
 
-5. **Ejecuta el proyecto**:
+6. **Ejecuta el proyecto**:
 
    ```bash
    npm run dev
@@ -81,11 +81,13 @@ npm run customize -- --name="Nombre de tu Empresa" --primary="210 100% 50%" --ac
 ```
 
 ### Parámetros:
+
 - `--name`: El nombre de tu empresa/aplicación. Actualiza títulos, meta tags, pie de página y configuración.
 - `--primary`: (Opcional) Color principal en formato **HSL** (ej. `210 100% 50%` para azul).
 - `--accent`: (Opcional) Color de acento en formato **HSL** (ej. `280 100% 50%` para púrpura).
 
 Este comando actualizará automáticamente:
+
 - Configuración de la marca (`app-config.json`).
 - Metadatos de SEO y PWA (`index.html`, `vite.config.ts`).
 - Variables de color CSS (`index.css`).
@@ -268,12 +270,12 @@ ALTER TABLE configuracion_empresa ENABLE ROW LEVEL SECURITY;
 ALTER TABLE configuracion_notificaciones ENABLE ROW LEVEL SECURITY;
 
 -- Políticas genéricas: Solo el dueño puede ver/editar sus datos
-DO $$ 
-DECLARE 
+DO $$
+DECLARE
     t text;
 BEGIN
-    FOR t IN SELECT table_name FROM information_schema.tables 
-             WHERE table_schema = 'public' 
+    FOR t IN SELECT table_name FROM information_schema.tables
+             WHERE table_schema = 'public'
              AND table_name IN ('perfiles', 'clientes', 'inventario', 'ventas', 'venta_items', 'cobranza', 'gastos', 'logs', 'configuracion_empresa', 'configuracion_notificaciones')
     LOOP
         EXECUTE format('DROP POLICY IF EXISTS "Users can only access their own data" ON %I', t);
@@ -290,7 +292,7 @@ END $$;
 -- ==========================================
 
 -- Crear buckets de almacenamiento
-INSERT INTO storage.buckets (id, name, public) 
+INSERT INTO storage.buckets (id, name, public)
 VALUES ('comprobantes', 'comprobantes', true),
        ('logos', 'logos', true),
        ('avatars', 'avatars', true)
@@ -302,7 +304,7 @@ CREATE POLICY "Acceso público" ON storage.objects FOR SELECT USING (bucket_id I
 
 -- Permitir a usuarios autenticados subir archivos a sus carpetas
 CREATE POLICY "Usuarios pueden subir archivos" ON storage.objects FOR INSERT WITH CHECK (
-    auth.role() = 'authenticated' AND 
+    auth.role() = 'authenticated' AND
     (bucket_id IN ('comprobantes', 'logos', 'avatars'))
 );
 
