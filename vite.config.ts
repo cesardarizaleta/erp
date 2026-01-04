@@ -11,29 +11,32 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
   },
   build: {
-    chunkSizeWarningLimit: 1000, // Aumentar límite de advertencia de chunks a 1000 kB
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Separar dependencias grandes en chunks separados
-          vendor: ["react", "react-dom", "react-router-dom"],
-          ui: [
-            "@radix-ui/react-dialog",
-            "@radix-ui/react-select",
-            "@radix-ui/react-dropdown-menu",
-            "@radix-ui/react-popover",
-            "@radix-ui/react-tooltip",
-          ],
-          supabase: ["@supabase/supabase-js"],
-          charts: ["recharts"],
-          utils: ["date-fns", "lucide-react", "zustand"],
-        },
+        manualChunks: process.env.npm_lifecycle_event?.includes("storybook")
+          ? undefined
+          : {
+              vendor: ["react", "react-dom", "react-router-dom"],
+              ui: [
+                "@radix-ui/react-dialog",
+                "@radix-ui/react-select",
+                "@radix-ui/react-dropdown-menu",
+                "@radix-ui/react-popover",
+                "@radix-ui/react-tooltip",
+              ],
+              supabase: ["@supabase/supabase-js"],
+              charts: ["recharts"],
+              utils: ["date-fns", "lucide-react", "zustand"],
+            },
       },
     },
   },
   plugins: [
     react(),
-    mode === "development" && componentTagger(),
+    mode === "development" &&
+      !process.env.npm_lifecycle_event?.includes("storybook") &&
+      componentTagger(),
     VitePWA({
       registerType: "autoUpdate",
       workbox: {

@@ -10,6 +10,7 @@ Una suite completa de gestión empresarial diseñada para pequeñas y medianas e
 - **Cobranza**: Gestiona pagos pendientes, fechas de vencimiento y estados de cobranza.
 - **Dashboard**: Visualiza estadísticas clave con gráficos y reportes en tiempo real.
 - **Autenticación**: Sistema seguro de login/registro con roles (admin, vendedor, cobrador).
+- **Documentación en Vivo**: Storybook integrado para documentar componentes y lógica de negocio.
 - **Interfaz Moderna**: UI responsiva y amigable con Tailwind CSS y shadcn-ui.
 
 ## 🛠 Tecnologías Utilizadas
@@ -92,6 +93,21 @@ Este comando actualizará automáticamente:
 - Metadatos de SEO y PWA (`index.html`, `vite.config.ts`).
 - Variables de color CSS (`index.css`).
 - Nombre del proyecto en `package.json`.
+
+## 📚 Documentación en Vivo (Storybook)
+
+Este proyecto utiliza **Storybook** para documentar y probar componentes de forma aislada. Esto facilita el desarrollo de la UI y sirve como una guía de estilo interactiva.
+
+### Comandos de Storybook:
+
+- **Ver documentación**: `npm run storybook` (Abre en [http://localhost:6006](http://localhost:6006))
+- **Construir documentación estática**: `npm run build-storybook`
+
+### Cómo documentar:
+
+1. Crea un archivo `.stories.tsx` dentro de la carpeta `src/stories/` (organizado por categoría).
+2. Define los estados y variantes del componente importando el componente real desde `@/components/...`.
+3. Storybook generará automáticamente la documentación técnica y los controles interactivos.
 
 ## ⚙️ Configuración de Supabase
 

@@ -1,0 +1,40 @@
+import { Meta } from "@storybook/blocks";
+
+<Meta title="Docs/Personalización" />
+
+# Guía de Personalización
+
+El sistema está diseñado para ser fácilmente adaptable a diferentes marcas.
+
+## Comando de Personalización
+
+Puedes cambiar el nombre y los colores de la aplicación usando el comando:
+
+```bash
+npm run customize -- --name="Mi Empresa" --primary="210 100% 50%"
+```
+
+## Variables CSS
+
+Los colores se gestionan mediante variables HSL en `src/index.css`. Esto permite cambiar el tema globalmente sin modificar los componentes individuales.
+
+```css
+:root {
+  --primary: 210 100% 50%;
+  --primary-foreground: 0 0% 100%;
+  /* ... */
+}
+```
+
+## Configuración de la Marca
+
+La configuración centralizada se encuentra en `src/config/app-config.json`. El script de personalización actualiza este archivo automáticamente.
+
+```json
+{
+  "name": "Mi Empresa ERP",
+  "shortName": "MiEmpresa",
+  "description": "Sistema de gestión empresarial",
+  "themeColor": "#0070f3"
+}
+```

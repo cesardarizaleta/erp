@@ -1,0 +1,34 @@
+import { Meta } from "@storybook/blocks";
+
+<Meta title="Docs/Arquitectura" />
+
+# Arquitectura del Proyecto
+
+Este proyecto sigue una arquitectura modular basada en **Features**. Cada funcionalidad importante del sistema reside en su propio directorio dentro de `src/features/`.
+
+## Estructura de una Feature
+
+Cada feature tiene la siguiente estructura:
+
+- `components/`: Componentes de UI específicos de la feature.
+- `hooks/`: Hooks de React para manejar el estado y la lógica.
+- `pages/`: Componentes de página que se conectan al enrutador.
+- `services/`: Lógica de negocio y llamadas a la API (Supabase).
+- `types/`: Definiciones de tipos TypeScript.
+- `utils/`: Funciones de ayuda específicas.
+
+## Flujo de Datos
+
+1. **UI (Componentes/Páginas)**: Renderizan la interfaz y reaccionan a eventos del usuario.
+2. **Hooks**: Manejan el estado local y coordinan las llamadas a servicios usando `react-query`.
+3. **Servicios**: Realizan las peticiones a Supabase a través del `supabaseWrapper`.
+4. **Supabase**: Base de datos PostgreSQL con políticas de seguridad (RLS).
+
+## Tecnologías Principales
+
+- **React 18**: Biblioteca de UI.
+- **Vite 7**: Herramienta de construcción y servidor de desarrollo.
+- **Tailwind CSS**: Framework de estilos.
+- **shadcn/ui**: Componentes de UI reutilizables.
+- **Zustand**: Gestión de estado global (Auth, Configuración).
+- **TanStack Query**: Gestión de estado asíncrono y caché de API.

@@ -15,7 +15,9 @@
     "format:check": "prettier --check .",
     "code-quality": "npm run lint && npm run type-check && npm run format:check",
     "code-quality:fix": "npm run lint:fix && npm run format",
-    "customize": "node scripts/customize.cjs"
+    "customize": "node scripts/customize.cjs",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
@@ -82,12 +84,21 @@
     "zustand": "^5.0.9"
   },
   "devDependencies": {
+    "@chromatic-com/storybook": "^3.0.0",
     "@eslint/js": "^9.32.0",
+    "@storybook/addon-a11y": "^8.6.15",
+    "@storybook/addon-essentials": "^8.6.15",
+    "@storybook/addon-onboarding": "^8.6.15",
+    "@storybook/blocks": "^8.6.15",
+    "@storybook/react-vite": "^8.6.15",
+    "@storybook/test": "^8.6.15",
     "@tailwindcss/typography": "^0.5.16",
     "@types/node": "^22.16.5",
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react-swc": "^3.11.0",
+    "@vitest/browser-playwright": "^4.0.16",
+    "@vitest/coverage-v8": "^4.0.16",
     "autoprefixer": "^10.4.21",
     "eslint": "^9.32.0",
     "eslint-config-prettier": "^10.1.8",
@@ -96,15 +107,19 @@
     "eslint-plugin-prettier": "^5.5.4",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
+    "eslint-plugin-storybook": "^0.11.0",
     "globals": "^15.15.0",
     "lint-staged": "^16.2.7",
     "lovable-tagger": "^1.1.13",
+    "playwright": "^1.57.0",
     "postcss": "^8.5.6",
     "prettier": "^3.7.4",
+    "storybook": "^8.6.15",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.38.0",
     "vite": "^7.3.0",
-    "vite-plugin-pwa": "^1.2.0"
+    "vite-plugin-pwa": "^1.2.0",
+    "vitest": "^4.0.16"
   }
 }

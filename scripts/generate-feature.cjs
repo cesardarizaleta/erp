@@ -63,6 +63,18 @@ fs.mkdirSync(featureDir, { recursive: true });
 // Copiar templates
 copyDirectory(templatesDir, featureDir);
 
+// Mover la historia a src/stories/features si existe
+const storyFile = path.join(featureDir, "pages", `${FeatureName}.stories.tsx`);
+if (fs.existsSync(storyFile)) {
+  const storiesFeatureDir = path.join(__dirname, "..", "src", "stories", "features");
+  if (!fs.existsSync(storiesFeatureDir)) {
+    fs.mkdirSync(storiesFeatureDir, { recursive: true });
+  }
+  const targetStoryFile = path.join(storiesFeatureDir, `${FeatureName}.stories.tsx`);
+  fs.renameSync(storyFile, targetStoryFile);
+  console.log(`✅ Historia movida a src/stories/features/${FeatureName}.stories.tsx`);
+}
+
 console.log(`✅ Feature "${featureName}" generada exitosamente en ${featureDir}`);
 
 // Actualizar src/services/index.ts para exportar el nuevo servicio
@@ -97,5 +109,6 @@ console.log(
   `2. Implementar la lógica del servicio en src/features/${featureName}/services/${featureName}Service.ts`
 );
 console.log(`3. Crear componentes adicionales en src/features/${featureName}/components/`);
-console.log(`4. Agregar rutas en src/App.tsx`);
+console.log(`4. Documentar la página en src/stories/features/${FeatureName}.stories.tsx`);
+console.log(`5. Agregar rutas en src/App.tsx`);
 console.log(`5. Actualizar la navegación si es necesario`);
