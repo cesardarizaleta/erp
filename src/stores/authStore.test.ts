@@ -61,7 +61,7 @@ describe("authStore", () => {
 
   it("debe cerrar sesión correctamente", async () => {
     useAuthStore.setState({ user: { id: "1" } as any });
-    vi.mocked(authService.signOut).mockResolvedValue();
+    vi.mocked(authService.signOut).mockResolvedValue({ data: null, error: null });
 
     await useAuthStore.getState().signOut();
 
