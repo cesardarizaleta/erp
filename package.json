@@ -16,12 +16,20 @@
     "code-quality": "npm run lint && npm run type-check && npm run format:check",
     "code-quality:fix": "npm run lint:fix && npm run format",
     "customize": "node scripts/customize.cjs",
+    "generate": "plop",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "prepare": "husky install"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
-      "eslint --fix",
+      "eslint --fix --no-warn-ignored",
       "prettier --write"
     ],
     "*.{js,jsx,json,md}": [
@@ -93,6 +101,9 @@
     "@storybook/react-vite": "^8.6.15",
     "@storybook/test": "^8.6.15",
     "@tailwindcss/typography": "^0.5.16",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.1",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^22.16.5",
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",
@@ -109,9 +120,12 @@
     "eslint-plugin-react-refresh": "^0.4.20",
     "eslint-plugin-storybook": "^0.11.0",
     "globals": "^15.15.0",
+    "husky": "^8.0.0",
+    "jsdom": "^27.4.0",
     "lint-staged": "^16.2.7",
     "lovable-tagger": "^1.1.13",
     "playwright": "^1.57.0",
+    "plop": "^4.0.4",
     "postcss": "^8.5.6",
     "prettier": "^3.7.4",
     "storybook": "^8.6.15",

@@ -1,3 +1,5 @@
+import { logger } from "./logger";
+
 /**
  * Sistema de errores consistente para la aplicación
  */
@@ -138,13 +140,12 @@ export function useErrorHandler() {
   const handleError = (error: unknown) => {
     const appError = ErrorFactory.fromUnknown(error);
 
-    // En desarrollo, loguear el error completo
-    if (process.env.NODE_ENV === "development") {
-      console.error("Error manejado:", appError);
-    }
-
-    // Aquí podrías enviar errores a un servicio de logging
-    // logError(appError);
+    // Loguear el error usando el logger centralizado
+    logger.error(`[${appError.type}] ${appError.message}`, {
+      code: appError.code,
+      details: appError.details,
+      original: appError.originalError,
+    });
 
     return appError;
   };
